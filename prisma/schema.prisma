@@ -1,0 +1,609 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// =========================================================
+// Shared enums
+// =========================================================
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  USER
+}
+
+enum RegionType {
+  STATE
+  PROVINCE
+  DIVISION
+  TERRITORY
+  DISTRICT
+  COUNTY
+  REGION
+}
+
+enum ConversionType {
+  MULTIPLY
+  FORMULA
+}
+
+// =========================================================
+// Users / Auth
+// =========================================================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  author                 Author?
+  blogPostsCreated       BlogPost[]
+  landConversionsCreated LandConversion[] @relation("LandConversionCreatedBy")
+  landConversionsUpdated LandConversion[] @relation("LandConversionUpdatedBy")
+
+  @@map("users")
+}
+
+// =========================================================
+// Languages
+// =========================================================
+
+model Language {
+  id         String  @id @default(cuid())
+  code       String  @unique // en | bn | hi ...
+  name       String
+  nativeName String
+  direction  String  @default("ltr") // ltr | rtl
+  isActive   Boolean @default(true)
+  isDefault  Boolean @default(false)
+  order      Int     @default(0)
+
+  categoryTranslations   CategoryTranslation[]
+  converterTranslations  ConverterTranslation[]
+  calculatorTranslations CalculatorTranslation[]
+  countryTranslations    CountryTranslation[]
+  regionTranslations     RegionTranslation[]
+  blogPostTranslations   BlogPostTranslation[]
+
+  @@map("languages")
+}
+
+// =========================================================
+// Geography: Country + generic Region hierarchy
+// (states / provinces / divisions / territories / districts / counties
+//  all share one self-referencing table — see section 57 of the spec)
+// =========================================================
+
+model Country {
+  id             String        @id @default(cuid())
+  code           String        @unique // ISO 3166-1 alpha-2
+  slug           String        @unique
+  name           String
+  capital        String?
+  currencyCode   String?
+  area           Float?
+  population     BigInt?
+  languagesText  String?
+  introContent   String?       @db.Text
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  faq            Json?
+  sourceName     String?
+  sourceUrl      String?
+  sourceDate     DateTime?
+  isIndexable    Boolean       @default(true)
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  regions         Region[]
+  translations    CountryTranslation[]
+  landUnits       LandUnit[]
+  landConversions LandConversion[]
+  currencies      Currency[]
+
+  @@map("countries")
+}
+
+model CountryTranslation {
+  id             String  @id @default(cuid())
+  countryId      String
+  languageId     String
+  name           String
+  introContent   String? @db.Text
+  seoTitle       String?
+  seoDescription String? @db.Text
+  faq            Json?
+
+  country  Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([countryId, languageId])
+  @@map("country_translations")
+}
+
+model Region {
+  id             String        @id @default(cuid())
+  countryId      String
+  parentId       String?
+  type           RegionType
+  slug           String
+  name           String
+  capital        String?
+  languagesText  String?
+  area           Float?
+  population     BigInt?
+  introContent   String?       @db.Text
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  faq            Json?
+  isIndexable    Boolean       @default(true)
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  country         Country              @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  parent          Region?              @relation("RegionHierarchy", fields: [parentId], references: [id])
+  children        Region[]             @relation("RegionHierarchy")
+  translations    RegionTranslation[]
+  landUnits       LandUnit[]
+  landConversions LandConversion[]
+
+  @@unique([countryId, slug])
+  @@index([countryId, type])
+  @@map("regions")
+}
+
+model RegionTranslation {
+  id             String  @id @default(cuid())
+  regionId       String
+  languageId     String
+  name           String
+  introContent   String? @db.Text
+  seoTitle       String?
+  seoDescription String? @db.Text
+  faq            Json?
+
+  region   Region   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([regionId, languageId])
+  @@map("region_translations")
+}
+
+// =========================================================
+// Converter engine
+// =========================================================
+
+model ConverterCategory {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?  @db.Text
+  icon           String?
+  order          Int      @default(0)
+  seoTitle       String?
+  seoDescription String?  @db.Text
+  isIndexable    Boolean  @default(true)
+
+  units        Unit[]
+  converters   Converter[]
+  translations CategoryTranslation[]
+
+  @@map("converter_categories")
+}
+
+model CategoryTranslation {
+  id          String  @id @default(cuid())
+  categoryId  String
+  languageId  String
+  name        String
+  description String? @db.Text
+
+  category ConverterCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  language Language          @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, languageId])
+  @@map("category_translations")
+}
+
+model Unit {
+  id           String   @id @default(cuid())
+  categoryId   String
+  code         String // e.g. "meter", "foot"
+  name         String
+  symbol       String?
+  toBaseFactor Decimal? @db.Decimal(24, 12) // multiply-based factor to the category's base unit
+  isBaseUnit   Boolean  @default(false)
+
+  category       ConverterCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  fromConverters Converter[]       @relation("FromUnit")
+  toConverters   Converter[]       @relation("ToUnit")
+
+  @@unique([categoryId, code])
+  @@map("units")
+}
+
+model Converter {
+  id             String         @id @default(cuid())
+  slug           String         @unique // e.g. "meter-to-foot"
+  categoryId     String
+  fromUnitId     String
+  toUnitId       String
+  name           String
+  description    String?        @db.Text
+  content        String?        @db.Text // long-form explainer article shown on the converter page
+  conversionType ConversionType @default(MULTIPLY)
+  formula        String?        @db.Text // used when conversionType = FORMULA
+  precision      Int            @default(4)
+  faq            Json?
+  seoTitle       String?
+  seoDescription String?        @db.Text
+  isIndexable    Boolean        @default(false) // admin opt-in only — see section 18 (no auto-indexing every combination)
+  status         ContentStatus  @default(DRAFT)
+  viewCount      Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  category     ConverterCategory      @relation(fields: [categoryId], references: [id])
+  fromUnit     Unit                   @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnit       Unit                   @relation("ToUnit", fields: [toUnitId], references: [id])
+  translations ConverterTranslation[]
+
+  @@index([categoryId])
+  @@index([status, isIndexable])
+  @@map("converters")
+}
+
+model ConverterTranslation {
+  id             String  @id @default(cuid())
+  converterId    String
+  languageId     String
+  slug           String? // localized slug override
+  name           String
+  description    String? @db.Text
+  content        String? @db.Text
+  seoTitle       String?
+  seoDescription String? @db.Text
+  faq            Json?
+
+  converter Converter @relation(fields: [converterId], references: [id], onDelete: Cascade)
+  language  Language  @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([converterId, languageId])
+  @@map("converter_translations")
+}
+
+// =========================================================
+// Calculators
+// =========================================================
+
+model Calculator {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  name           String
+  category       String
+  description    String?       @db.Text
+  content        String?       @db.Text // long-form explainer article shown on the calculator page
+  logicKey       String // identifies the server-side calc handler to use
+  config         Json? // formula / field config
+  faq            Json?
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  isIndexable    Boolean       @default(true)
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  fields       CalculatorField[]
+  translations CalculatorTranslation[]
+
+  @@map("calculators")
+}
+
+model CalculatorField {
+  id           String  @id @default(cuid())
+  calculatorId String
+  name         String
+  label        String
+  type         String // number | select | text | date
+  unit         String?
+  validation   Json?
+  order        Int     @default(0)
+
+  calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
+
+  @@map("calculator_fields")
+}
+
+model CalculatorTranslation {
+  id             String  @id @default(cuid())
+  calculatorId   String
+  languageId     String
+  name           String
+  description    String? @db.Text
+  content        String? @db.Text
+  seoTitle       String?
+  seoDescription String? @db.Text
+  faq            Json?
+
+  calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
+  language   Language   @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([calculatorId, languageId])
+  @@map("calculator_translations")
+}
+
+// =========================================================
+// Land units & region-specific conversions
+// (country + region + unit determines the definition — section 64)
+// =========================================================
+
+model LandUnit {
+  id          String  @id @default(cuid())
+  countryId   String
+  regionId    String? // null = country-wide default, otherwise region-specific
+  code        String
+  name        String
+  description String? @db.Text
+
+  country Country @relation(fields: [countryId], references: [id])
+  region  Region? @relation(fields: [regionId], references: [id])
+
+  conversionsFrom LandConversion[] @relation("FromLandUnit")
+  conversionsTo   LandConversion[] @relation("ToLandUnit")
+
+  @@unique([countryId, regionId, code])
+  @@map("land_units")
+}
+
+model LandConversion {
+  id            String        @id @default(cuid())
+  countryId     String
+  regionId      String?
+  fromUnitId    String
+  toUnitId      String
+  factor        Decimal       @db.Decimal(24, 10)
+  source        String?
+  sourceUrl     String?
+  effectiveDate DateTime?
+  notes         String?       @db.Text
+  isIndexable   Boolean       @default(true)
+  status        ContentStatus @default(DRAFT)
+  createdById   String?
+  updatedById   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  country   Country                  @relation(fields: [countryId], references: [id])
+  region    Region?                  @relation(fields: [regionId], references: [id])
+  fromUnit  LandUnit                 @relation("FromLandUnit", fields: [fromUnitId], references: [id])
+  toUnit    LandUnit                 @relation("ToLandUnit", fields: [toUnitId], references: [id])
+  createdBy User?                    @relation("LandConversionCreatedBy", fields: [createdById], references: [id])
+  updatedBy User?                    @relation("LandConversionUpdatedBy", fields: [updatedById], references: [id])
+  history   LandConversionHistory[]
+
+  @@unique([fromUnitId, toUnitId])
+  @@index([countryId, regionId])
+  @@map("land_conversions")
+}
+
+model LandConversionHistory {
+  id               String   @id @default(cuid())
+  landConversionId String
+  previousFactor   Decimal  @db.Decimal(24, 10)
+  newFactor        Decimal  @db.Decimal(24, 10)
+  changedById      String?
+  source           String?
+  changedAt        DateTime @default(now())
+
+  landConversion LandConversion @relation(fields: [landConversionId], references: [id], onDelete: Cascade)
+
+  @@map("land_conversion_history")
+}
+
+// =========================================================
+// Currency
+// =========================================================
+
+model Currency {
+  id        String  @id @default(cuid())
+  code      String  @unique // ISO 4217: USD, INR, BDT
+  symbol    String
+  name      String
+  countryId String?
+  isActive  Boolean @default(true)
+
+  country       Country?       @relation(fields: [countryId], references: [id])
+  ratesAsBase   ExchangeRate[] @relation("BaseCurrency")
+  ratesAsTarget ExchangeRate[] @relation("TargetCurrency")
+
+  @@map("currencies")
+}
+
+model ExchangeRate {
+  id               String   @id @default(cuid())
+  baseCurrencyId   String
+  targetCurrencyId String
+  rate             Decimal  @db.Decimal(20, 8)
+  source           String?
+  sourceUrl        String?
+  isManualOverride Boolean  @default(false)
+  fetchedAt        DateTime @default(now())
+
+  baseCurrency   Currency @relation("BaseCurrency", fields: [baseCurrencyId], references: [id])
+  targetCurrency Currency @relation("TargetCurrency", fields: [targetCurrencyId], references: [id])
+
+  @@unique([baseCurrencyId, targetCurrencyId])
+  @@map("exchange_rates")
+}
+
+// =========================================================
+// Blog / CMS
+// =========================================================
+
+model Author {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  name   String
+  bio    String? @db.Text
+  avatar String?
+
+  user  User?      @relation(fields: [userId], references: [id])
+  posts BlogPost[]
+
+  @@map("authors")
+}
+
+model BlogCategory {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String
+
+  posts BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  authorId       String
+  categoryId     String?
+  featuredImage  String?
+  title          String
+  excerpt        String?       @db.Text
+  content        String        @db.LongText
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  focusKeyword   String?
+  canonicalUrl   String?
+  ogTitle        String?
+  ogDescription  String?       @db.Text
+  ogImage        String?
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdById    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  author       Author                @relation(fields: [authorId], references: [id])
+  category     BlogCategory?         @relation(fields: [categoryId], references: [id])
+  createdBy    User?                 @relation(fields: [createdById], references: [id])
+  tags         BlogPostTag[]
+  translations BlogPostTranslation[]
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+model BlogPostTag {
+  blogPostId String
+  blogTagId  String
+
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  blogTag  BlogTag  @relation(fields: [blogTagId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, blogTagId])
+  @@map("blog_post_tags")
+}
+
+model BlogPostTranslation {
+  id             String  @id @default(cuid())
+  blogPostId     String
+  languageId     String
+  title          String
+  excerpt        String? @db.Text
+  content        String  @db.LongText
+  seoTitle       String?
+  seoDescription String? @db.Text
+
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, languageId])
+  @@map("blog_post_translations")
+}
+
+// =========================================================
+// Cross-entity relations (section 21 — related content engine)
+// =========================================================
+
+model RelatedContent {
+  id         String  @id @default(cuid())
+  sourceType String // "converter" | "calculator" | "blog_post" | "country" | "region"
+  sourceId   String
+  targetType String
+  targetId   String
+  order      Int     @default(0)
+  isManual   Boolean @default(false)
+
+  @@unique([sourceType, sourceId, targetType, targetId])
+  @@index([sourceType, sourceId])
+  @@map("related_content")
+}
+
+// =========================================================
+// SEO / platform plumbing
+// =========================================================
+
+model Redirect {
+  id         String   @id @default(cuid())
+  fromPath   String   @unique
+  toPath     String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@map("redirects")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+  group String @default("general")
+
+  @@map("settings")
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventType  String // converter_use | search | calculator_use | language_select
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([eventType, createdAt])
+  @@map("analytics_events")
+}
