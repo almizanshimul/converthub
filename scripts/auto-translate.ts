@@ -313,6 +313,25 @@ async function translateCalculators(target: TargetLanguage, languageId: string) 
   return count;
 }
 
+async function translateBlogPosts(target: TargetLanguage, languageId: string) {
+  const rows = await prisma.blogPost.findMany({ where: { translations: { none: { languageId } } } });
+  for (const row of rows) {
+    console.log(`[${target}] blog post: ${row.slug}`);
+    await prisma.blogPostTranslation.create({
+      data: {
+        blogPostId: row.id,
+        languageId,
+        title: await translate(row.title, target),
+        excerpt: row.excerpt ? await translate(row.excerpt, target) : null,
+        content: await translate(row.content, target),
+        seoTitle: row.seoTitle ? await translate(row.seoTitle, target) : null,
+        seoDescription: row.seoDescription ? await translate(row.seoDescription, target) : null,
+      },
+    });
+  }
+  return rows.length;
+}
+
 async function main() {
   const health = await fetch(`${LIBRETRANSLATE_URL}/languages`).catch(() => null);
   if (!health?.ok) {
@@ -332,6 +351,7 @@ async function main() {
     total += await translateCountries(target, languageId);
     total += await translateRegions(target, languageId);
     total += await translateCalculators(target, languageId);
+    total += await translateBlogPosts(target, languageId);
   }
 
   console.log(total === 0 ? "Nothing to translate — every entity already has bn/hi translations." : `Translated ${total} entries. Spot-check technical terms before treating as final.`);

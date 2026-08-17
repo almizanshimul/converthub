@@ -31,6 +31,7 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
     { href: `/${locale}/land`, label: dict.nav.land },
     { href: `/${locale}/calculator`, label: dict.nav.calculators },
     { href: `/${locale}/country`, label: dict.nav.countries },
+    { href: `/${locale}/blog`, label: dict.blog.navLabel },
   ];
 
   return (
@@ -59,6 +60,9 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
           />
           <Link href={`/${locale}/country`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
             {dict.nav.countries}
+          </Link>
+          <Link href={`/${locale}/blog`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            {dict.blog.navLabel}
           </Link>
         </nav>
 

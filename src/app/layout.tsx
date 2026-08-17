@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { JsonLd } from "@/components/seo/json-ld";
+import { websiteSchema, organizationSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +29,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   // <html lang>/dir via a tiny client sync — see LocaleHtmlAttrs.
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <JsonLd data={websiteSchema()} />
+        <JsonLd data={organizationSchema()} />
+        {children}
+      </body>
     </html>
   );
 }

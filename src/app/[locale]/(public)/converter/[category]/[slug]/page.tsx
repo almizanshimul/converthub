@@ -13,6 +13,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getFormulaDisplay } from "@/lib/converters/formula-display";
 import { convert, formatResult } from "@/lib/converters/engine";
 import { generateConverterContent } from "@/lib/converters/generated-content";
+import { logEvent, incrementConverterView } from "@/lib/analytics";
 import { breadcrumbSchema, converterWebApplicationSchema, faqSchema } from "@/lib/seo/schema";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -194,6 +195,10 @@ export default async function ConverterPage({
   const dict = getDictionary(locale);
   const converter = await getConverter(categorySlug, slug, locale);
   if (!converter) notFound();
+  if (converter.isIndexable) {
+    await incrementConverterView(converter.id);
+    await logEvent("converter_use", { entityType: "converter", entityId: converter.id, metadata: { slug: converter.slug, locale } });
+  }
 
   const t = localize(converter, converter.translations);
   const category = localize(converter.category, converter.category.translations);

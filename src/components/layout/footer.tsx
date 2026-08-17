@@ -74,6 +74,11 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
                 {dict.nav.countries}
               </Link>
             </li>
+            <li>
+              <Link href={`/${locale}/blog`} className="text-sm text-muted-foreground hover:text-foreground">
+                {dict.blog.navLabel}
+              </Link>
+            </li>
           </ul>
         </div>
 

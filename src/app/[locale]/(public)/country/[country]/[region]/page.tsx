@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
@@ -79,39 +80,40 @@ export default async function RegionPage({
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {data.region.capital && (
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Capital</p>
+            <p className="text-xs text-muted-foreground">{dict.country.capital}</p>
             <p className="mt-1 font-medium">{data.region.capital}</p>
           </Card>
         )}
         {data.region.languagesText && (
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Languages</p>
+            <p className="text-xs text-muted-foreground">{dict.country.languages}</p>
             <p className="mt-1 font-medium">{data.region.languagesText}</p>
           </Card>
         )}
         {data.region.area && (
           <Card className="p-4">
-            <p className="text-xs text-muted-foreground">Area</p>
+            <p className="text-xs text-muted-foreground">{dict.country.area}</p>
             <p className="mt-1 font-medium">{data.region.area.toLocaleString("en-US")} km²</p>
           </Card>
         )}
       </div>
 
+      <div className="mt-6">
+        <AdSlot slot={`country-region-${data.country.slug}-${data.region.slug}-below-stats`} />
+      </div>
+
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">Local Land Units</h2>
+        <h2 className="text-xl font-semibold">{dict.country.localLandUnitsHeading}</h2>
         {landConversions.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Local land-unit conversions for {region.name} have not been published yet — local units like Bigha or Katha vary
-            significantly by region, so each value is added only once it has a verified source.
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{dict.country.noLandDataMessage.replace("{region}", region.name)}</p>
         ) : (
           <div className="mt-4 overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead className="bg-muted text-left">
                 <tr>
-                  <th className="px-4 py-2 font-medium">Unit</th>
-                  <th className="px-4 py-2 font-medium">Equals</th>
-                  <th className="px-4 py-2 font-medium">Source</th>
+                  <th className="px-4 py-2 font-medium">{dict.country.unitColumnHeading}</th>
+                  <th className="px-4 py-2 font-medium">{dict.country.equalsColumnHeading}</th>
+                  <th className="px-4 py-2 font-medium">{dict.country.sourceLabel}</th>
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +126,7 @@ export default async function RegionPage({
                     <td className="px-4 py-2">
                       {lc.sourceUrl ? (
                         <a href={lc.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">
-                          {lc.source ?? "Source"}
+                          {lc.source ?? dict.country.sourceLabel}
                         </a>
                       ) : (
                         lc.source ?? "—"
@@ -140,7 +142,7 @@ export default async function RegionPage({
 
       <div className="mt-10">
         <Link href={`/${locale}/land/${data.country.slug}/${data.region.slug}`} className="text-sm font-medium text-primary hover:underline">
-          Open the {region.name} land calculator →
+          {dict.country.openLandCalculator.replace("{region}", region.name)}
         </Link>
       </div>
     </div>

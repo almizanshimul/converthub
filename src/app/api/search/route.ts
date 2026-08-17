@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isLocale, defaultLocale } from "@/lib/i18n/config";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { logEvent } from "@/lib/analytics";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -82,6 +83,8 @@ export async function GET(req: NextRequest) {
       href: `/${locale}/currency?from=${c.code}`,
     })),
   ];
+
+  await logEvent("search", { metadata: { q, locale, resultCount: results.length } });
 
   return NextResponse.json({ results });
 }

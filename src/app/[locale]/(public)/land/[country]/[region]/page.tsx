@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { LandCalculatorWidget, type LandUnitOption } from "@/components/land/land-calculator-widget";
 import { ShareButton } from "@/components/share/share-button";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
@@ -42,6 +43,11 @@ async function getRegionLandData(countrySlug: string, regionSlug: string, locale
     .map((u) => ({ id: u.id, name: u.name, sqFtFactor: sqFtFactorByUnitId.get(u.id)! }));
 
   return { country, region, options, conversions, units };
+}
+
+export async function generateStaticParams() {
+  const regions = await prisma.region.findMany({ where: { status: "PUBLISHED" }, include: { country: true } });
+  return regions.map((r) => ({ country: r.country.slug, region: r.slug }));
 }
 
 export async function generateMetadata({
@@ -114,6 +120,10 @@ export default async function LandRegionPage({
             {dict.land.noDataMessage.replace("{region}", regionT.name)}
           </p>
         )}
+      </div>
+
+      <div className="mt-6">
+        <AdSlot slot={`land-${country.slug}-${region.slug}-below-calculator`} />
       </div>
 
       {sourcedConversions.length > 0 && (

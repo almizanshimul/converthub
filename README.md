@@ -9,8 +9,12 @@ A free, multi-language unit, currency, and land-measurement converter site built
 - **Land measurement calculators** — region-specific traditional land units (e.g. bigha, katha, decimal, kanal, marla) for India, Bangladesh, Pakistan, and Nepal, since these vary by state/province and don't map to a single national conversion factor.
 - **Calculators** — number-to-words (in every site language, each with its own number-grouping/grammar rules — see below), BMI, and a basic arithmetic calculator.
 - **Country directory** — all 195 countries, with population, capital, currency, flag, land-unit links where applicable, and Wikipedia-sourced data with citations.
+- **Blog** (`/blog`) — categories, tags, a curated "related content" engine that links blog posts to converters/calculators/countries/regions, full admin CMS.
 - **7 languages** — English, Bengali, Hindi, Urdu, Arabic, Spanish, French — including RTL layout for Arabic/Urdu.
-- **Admin panel** (`/admin`) — NextAuth-gated dashboard for the content behind all of the above.
+- **SEO** — a sitemap covering every locale × content-type combination (~49k URLs) with hreflang alternates, `robots.txt`, and JSON-LD (`Organization`, `WebSite`, `BreadcrumbList`, `FAQPage`, `Article`, `WebApplication`) throughout.
+- **First-party analytics** — converter/calculator usage, searches, and language switches logged to the database (no cookies, no third-party script); visible at `/admin/analytics`.
+- **Ad slots** — provider-agnostic placeholders (`src/components/ads/ad-slot.tsx`) wired across content pages, off by default until `NEXT_PUBLIC_ADS_ENABLED=true` and a real network is connected.
+- **Admin panel** (`/admin`) — NextAuth-gated dashboard, blog CMS, and analytics.
 
 ## Tech stack
 
@@ -19,6 +23,7 @@ A free, multi-language unit, currency, and land-measurement converter site built
 - [Prisma 7](https://www.prisma.io) with `@prisma/adapter-mariadb` — needs MariaDB/MySQL, not the default Prisma driver
 - [Auth.js / NextAuth v5](https://authjs.dev) — single-admin, credentials-based login
 - Self-hosted [LibreTranslate](https://libretranslate.com) (Argos Translate) for bulk-translating database content
+- [Vitest](https://vitest.dev) for unit tests (pure logic only — no component/e2e harness yet, see Testing below)
 
 ## Getting started
 
@@ -46,6 +51,8 @@ Open [http://localhost:3000](http://localhost:3000). The admin dashboard is at `
 | --- | --- |
 | `npm run dev` / `build` / `start` | Standard Next.js dev / production build / production serve |
 | `npm run lint` | ESLint |
+| `npm run test` | Runs the Vitest suite once |
+| `npm run test:watch` | Vitest in watch mode |
 | `npm run db:migrate` | `prisma migrate dev` |
 | `npm run db:seed` | Runs `prisma/seed.ts` |
 | `npm run db:studio` | `prisma studio` — browse the database |
@@ -68,14 +75,29 @@ npm run translate:missing
 
 Adding a new locale means: add it to `src/lib/i18n/config.ts`, hand-write its `dictionary.ts` and `units.ts` entries, install the matching Argos Translate package, restart LibreTranslate with the new code in `--load-only`, then run `translate:missing`.
 
+## SEO
+
+- `src/app/sitemap.ts` — generated at request time from the database (converters, calculators, countries, regions, blog posts, categories, tags), one entry per locale per page with `alternates.languages` pointing at every other locale's version of the same page.
+- `src/app/robots.ts` — allows everything except `/admin` and `/api/`, points crawlers at the sitemap.
+- `src/lib/seo/schema.ts` + `src/components/seo/json-ld.tsx` — JSON-LD helpers used across page types; `Organization`/`WebSite` are sitewide (root layout), the rest are per-page.
+- **`NEXT_PUBLIC_SITE_URL` must be set to the real production domain** — sitemap URLs, JSON-LD `url`/`@id` fields, and `robots.txt`'s sitemap reference all fall back to `http://localhost:3000` otherwise.
+- Nearly every content page uses `generateStaticParams`, so the vast majority of the site (~49k pages across all locales) is static HTML at build time, not rendered per-request.
+
+## Testing
+
+`npm run test` runs Vitest against pure-logic modules only — the conversion engine, currency math, number-to-words (one regression case per supported language), `slugify`, and the i18n `localize()` merge logic. There's no component-rendering or end-to-end test harness yet: Server Components / server actions in this app were instead verified manually against a running dev server (real login, real form submissions, checking the resulting HTML/DB state) rather than through an automated harness — a `/run`-style driver script would be a reasonable next step if this becomes a recurring need.
+
 ## Project structure
 
 ```
-src/app/[locale]/(public)/   # converter, currency, land, calculator, country, about, contact, privacy
-src/app/admin/                # NextAuth-gated admin dashboard
-src/components/               # widgets (converter, currency, calculator, land) + layout + ui
-src/lib/                      # conversion engine, currency, number-to-words, i18n, seo
+src/app/[locale]/(public)/   # converter, currency, land, calculator, country, blog, about, contact, privacy
+src/app/admin/                # NextAuth-gated admin: dashboard, blog CMS, analytics
+src/app/sitemap.ts            # sitemap.xml (generated from the DB)
+src/app/robots.ts             # robots.txt
+src/components/               # widgets (converter, currency, calculator, land) + layout + ui + ads
+src/lib/                      # conversion engine, currency, number-to-words, i18n, seo, analytics, blog, related-content
 prisma/schema.prisma          # ~30 models: converters, currencies, countries/regions, land units, calculators, blog, auth
 prisma/seed.ts                # seed data entry point (prisma/data/*)
 scripts/                      # auto-translate, translate-ui, fetch-currency-rates
+*.test.ts                     # colocated next to the module they test (Vitest)
 ```

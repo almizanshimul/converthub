@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
 import { ShareButton } from "@/components/share/share-button";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
@@ -98,6 +99,10 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
           <p className="text-xs text-muted-foreground">{dict.country.languages}</p>
           <p className="mt-1 font-medium">{country.languagesText}</p>
         </Card>
+      </div>
+
+      <div className="mt-6">
+        <AdSlot slot={`country-${country.slug}-below-stats`} />
       </div>
 
       {country.regions.length > 0 && (

@@ -55,3 +55,26 @@ export function organizationSchema() {
     url: SITE_URL,
   };
 }
+
+export function articleSchema(article: {
+  title: string;
+  description?: string | null;
+  url: string;
+  image?: string | null;
+  authorName: string;
+  publishedAt: string;
+  updatedAt?: string | null;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.description ?? undefined,
+    image: article.image ? [article.image] : undefined,
+    datePublished: article.publishedAt,
+    dateModified: article.updatedAt ?? article.publishedAt,
+    author: { "@type": "Person", name: article.authorName },
+    publisher: { "@type": "Organization", name: SITE_NAME },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}${article.url}` },
+  };
+}

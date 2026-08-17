@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { CurrencyWidget } from "@/components/currency/currency-widget";
 import { ShareButton } from "@/components/share/share-button";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { sortCurrencyOptions, convertCurrency, type CurrencyOption } from "@/lib/currency";
 import type { Locale } from "@/lib/i18n/config";
 
-export const metadata: Metadata = {
-  title: "Currency Converter",
-  description: "Convert between world currencies using regularly-updated exchange rates, with a cited data source.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const dict = getDictionary(rawLocale as Locale);
+  return { title: dict.currency.pageTitle, description: dict.currency.pageSubtitle };
+}
 
 const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };
 
@@ -79,6 +81,10 @@ export default async function CurrencyPage({
               labels={{ from: dict.widget.from, to: dict.widget.to, swap: dict.widget.swap, amount: dict.currency.amount }}
               tableTitle={dict.section.conversionTable}
             />
+          </div>
+
+          <div className="mt-6">
+            <AdSlot slot="currency-below-widget" />
           </div>
 
           {asOfDate && latestRate && (
