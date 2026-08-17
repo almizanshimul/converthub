@@ -140,10 +140,24 @@ function looksUntranslated(original: string, result: string, target: TargetLangu
 
 async function translateWithFallback(text: string, target: TargetLanguage, depth = 0): Promise<string> {
   const result = await translateRaw(text, target);
-  if (!looksUntranslated(text, result, target) || depth >= 4 || text.length < 20) {
-    if (depth >= 4 && looksUntranslated(text, result, target)) {
-      console.warn(`  [${target}] still untranslated after ${depth} splits, keeping as-is: "${text.slice(0, 80)}"`);
-    }
+  if (!looksUntranslated(text, result, target)) return result;
+
+  // Short text (proper nouns especially — country/region names) can't be usefully
+  // bisected, but silently accepting a failed translation here was the actual bug:
+  // thousands of short place-name translations were left as plain English with no
+  // record of it anywhere, since this branch used to return `result` unconditionally
+  // without ever reaching the warning below. One plain retry costs little and
+  // occasionally succeeds; either way, a real failure now gets logged instead of
+  // disappearing silently.
+  if (text.length < 20) {
+    const retry = await translateRaw(text, target);
+    if (!looksUntranslated(text, retry, target)) return retry;
+    console.warn(`  [${target}] short text still untranslated after retry, keeping as-is: "${text}"`);
+    return retry;
+  }
+
+  if (depth >= 4) {
+    console.warn(`  [${target}] still untranslated after ${depth} splits, keeping as-is: "${text.slice(0, 80)}"`);
     return result;
   }
   const midpoint = Math.floor(text.length / 2);

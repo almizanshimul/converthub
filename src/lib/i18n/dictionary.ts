@@ -110,6 +110,19 @@ export const dictionary = {
       asOf: "Rates as of {date}",
       disclaimer: "Exchange rates are updated periodically, not in real time — always confirm the current rate before a financial transaction.",
     },
+    land: {
+      pageTitle: "Land Calculator",
+      pageSubtitle: "Local land units like Bigha, Katha, Kanal, and Marla vary by region — select a country and state to get the correct conversion for that area.",
+      countryTitle: "{country} Land Unit Calculator",
+      countryPageSubtitle: "Land-unit definitions vary by region in {country}. Select a state or region below to get the correct conversion.",
+      regionTitle: "{region} Land Unit Calculator",
+      regionPageSubtitle: "Land-unit definitions can vary by region. These values apply specifically to {region}, {country}.",
+      sourcesHeading: "Sources",
+      noDataMessage: "Verified local land-unit conversions for {region} have not been published yet. Local units such as Bigha or Katha are only added once a source can be cited, since the same unit name can mean a different area in a neighboring state.",
+      metaCountryDescription: "Convert local land units by state/region in {country}.",
+      metaRegionTitle: "{region} Land Unit Converter — Bigha, Katha & More",
+      metaRegionDescription: "Convert local land units in {region}, {country}.",
+    },
     calculator: {
       bmi: {
         height: "Height",
@@ -227,6 +240,19 @@ export const dictionary = {
       sourceLabel: "বিনিময় হারের উৎস",
       asOf: "{date} অনুযায়ী হার",
       disclaimer: "বিনিময় হার নিয়মিত বিরতিতে আপডেট করা হয়, রিয়েল-টাইমে নয় — আর্থিক লেনদেনের আগে সবসময় বর্তমান হার যাচাই করে নিন।",
+    },
+    land: {
+      pageTitle: "জমি ক্যালকুলেটর",
+      pageSubtitle: "বিঘা, কাঠা, কানাল এবং মারলার মতো স্থানীয় জমির একক অঞ্চলভেদে ভিন্ন হয় — সঠিক রূপান্তরের জন্য একটি দেশ ও রাজ্য নির্বাচন করুন।",
+      countryTitle: "{country} জমির একক ক্যালকুলেটর",
+      countryPageSubtitle: "{country}-এ জমির এককের সংজ্ঞা অঞ্চলভেদে ভিন্ন হয়। সঠিক রূপান্তর পেতে নিচে থেকে একটি রাজ্য বা অঞ্চল নির্বাচন করুন।",
+      regionTitle: "{region} জমির একক ক্যালকুলেটর",
+      regionPageSubtitle: "জমির এককের সংজ্ঞা অঞ্চলভেদে ভিন্ন হতে পারে। এই মানগুলো নির্দিষ্টভাবে {region}, {country}-এর জন্য প্রযোজ্য।",
+      sourcesHeading: "উৎসসমূহ",
+      noDataMessage: "{region}-এর জন্য যাচাইকৃত স্থানীয় জমির একক রূপান্তর এখনও প্রকাশিত হয়নি। বিঘা বা কাঠার মতো স্থানীয় একক তখনই যোগ করা হয় যখন একটি উৎস উদ্ধৃত করা যায়, কারণ প্রতিবেশী রাজ্যে একই এককের নাম ভিন্ন আয়তন বোঝাতে পারে।",
+      metaCountryDescription: "{country}-এ রাজ্য/অঞ্চল অনুযায়ী স্থানীয় জমির একক রূপান্তর করুন।",
+      metaRegionTitle: "{region} জমির একক কনভার্টার — বিঘা, কাঠা এবং আরও অনেক কিছু",
+      metaRegionDescription: "{region}, {country}-এ স্থানীয় জমির একক রূপান্তর করুন।",
     },
     calculator: {
       bmi: {
@@ -346,6 +372,19 @@ export const dictionary = {
       asOf: "{date} के अनुसार दरें",
       disclaimer: "विनिमय दरें समय-समय पर अपडेट की जाती हैं, रीयल-टाइम में नहीं — किसी भी वित्तीय लेनदेन से पहले हमेशा मौजूदा दर की पुष्टि करें।",
     },
+    land: {
+      pageTitle: "भूमि कैलकुलेटर",
+      pageSubtitle: "बीघा, कट्ठा, कनाल और मरला जैसी स्थानीय भूमि इकाइयाँ क्षेत्र के अनुसार भिन्न होती हैं — सही रूपांतरण पाने के लिए एक देश और राज्य चुनें।",
+      countryTitle: "{country} भूमि इकाई कैलकुलेटर",
+      countryPageSubtitle: "{country} में भूमि इकाई की परिभाषाएँ क्षेत्र के अनुसार भिन्न होती हैं। सही रूपांतरण पाने के लिए नीचे से एक राज्य या क्षेत्र चुनें।",
+      regionTitle: "{region} भूमि इकाई कैलकुलेटर",
+      regionPageSubtitle: "भूमि इकाई की परिभाषाएँ क्षेत्र के अनुसार भिन्न हो सकती हैं। ये मान विशेष रूप से {region}, {country} पर लागू होते हैं।",
+      sourcesHeading: "स्रोत",
+      noDataMessage: "{region} के लिए सत्यापित स्थानीय भूमि इकाई रूपांतरण अभी प्रकाशित नहीं हुए हैं। बीघा या कट्ठा जैसी स्थानीय इकाइयाँ तभी जोड़ी जाती हैं जब कोई स्रोत उद्धृत किया जा सके, क्योंकि पड़ोसी राज्य में एक ही इकाई के नाम का अर्थ अलग क्षेत्रफल हो सकता है।",
+      metaCountryDescription: "{country} में राज्य/क्षेत्र के अनुसार स्थानीय भूमि इकाइयों को रूपांतरित करें।",
+      metaRegionTitle: "{region} भूमि इकाई कनवर्टर — बीघा, कट्ठा और अधिक",
+      metaRegionDescription: "{region}, {country} में स्थानीय भूमि इकाइयों को रूपांतरित करें।",
+    },
     calculator: {
       bmi: {
         height: "ऊंचाई",
@@ -464,6 +503,19 @@ export const dictionary = {
       asOf: "{date} کے مطابق شرحیں",
       disclaimer: "شرح مبادلہ وقتاً فوقتاً اپڈیٹ کی جاتی ہے، ریئل ٹائم میں نہیں — کسی بھی مالی لین دین سے پہلے ہمیشہ موجودہ شرح کی تصدیق کریں۔",
     },
+    land: {
+      pageTitle: "زمین کیلکولیٹر",
+      pageSubtitle: "بیگھہ، کٹھہ، کنال اور مرلہ جیسی مقامی زمین کی اکائیاں علاقے کے لحاظ سے مختلف ہوتی ہیں — درست تبدیلی کے لیے ایک ملک اور ریاست منتخب کریں۔",
+      countryTitle: "{country} زمین کی اکائی کیلکولیٹر",
+      countryPageSubtitle: "{country} میں زمین کی اکائی کی تعریفات علاقے کے لحاظ سے مختلف ہوتی ہیں۔ درست تبدیلی حاصل کرنے کے لیے نیچے سے ایک ریاست یا علاقہ منتخب کریں۔",
+      regionTitle: "{region} زمین کی اکائی کیلکولیٹر",
+      regionPageSubtitle: "زمین کی اکائی کی تعریفات علاقے کے لحاظ سے مختلف ہو سکتی ہیں۔ یہ اقدار خاص طور پر {region}, {country} پر لاگو ہوتی ہیں۔",
+      sourcesHeading: "ماخذ",
+      noDataMessage: "{region} کے لیے تصدیق شدہ مقامی زمین کی اکائی کی تبدیلیاں ابھی شائع نہیں ہوئیں۔ بیگھہ یا کٹھہ جیسی مقامی اکائیاں تب ہی شامل کی جاتی ہیں جب کوئی ماخذ حوالہ دیا جا سکے، کیونکہ ایک ہی اکائی کا نام پڑوسی ریاست میں مختلف رقبے کا مطلب دے سکتا ہے۔",
+      metaCountryDescription: "{country} میں ریاست/علاقے کے لحاظ سے مقامی زمین کی اکائیاں تبدیل کریں۔",
+      metaRegionTitle: "{region} زمین کی اکائی کنورٹر — بیگھہ، کٹھہ اور مزید",
+      metaRegionDescription: "{region}, {country} میں مقامی زمین کی اکائیاں تبدیل کریں۔",
+    },
     calculator: {
       bmi: {
         height: "قد",
@@ -581,6 +633,19 @@ export const dictionary = {
       sourceLabel: "مصدر سعر الصرف",
       asOf: "الأسعار كما في {date}",
       disclaimer: "يتم تحديث أسعار الصرف بشكل دوري، وليس في الوقت الفعلي — يرجى دائما التأكد من السعر الحالي قبل إجراء أي معاملة مالية.",
+    },
+    land: {
+      pageTitle: "حاسبة الأراضي",
+      pageSubtitle: "تختلف وحدات الأراضي المحلية مثل بيغا وكاثا وكانال ومارلا حسب المنطقة — اختر دولة وولاية للحصول على التحويل الصحيح.",
+      countryTitle: "حاسبة وحدات الأراضي في {country}",
+      countryPageSubtitle: "تختلف تعريفات وحدات الأراضي حسب المنطقة في {country}. اختر ولاية أو منطقة أدناه للحصول على التحويل الصحيح.",
+      regionTitle: "حاسبة وحدات الأراضي في {region}",
+      regionPageSubtitle: "قد تختلف تعريفات وحدات الأراضي حسب المنطقة. تنطبق هذه القيم تحديدًا على {region}، {country}.",
+      sourcesHeading: "المصادر",
+      noDataMessage: "لم يتم نشر تحويلات وحدات الأراضي المحلية الموثقة لـ {region} بعد. لا تُضاف الوحدات المحلية مثل بيغا أو كاثا إلا عند توفر مصدر يمكن الاستشهاد به، لأن نفس اسم الوحدة قد يعني مساحة مختلفة في ولاية مجاورة.",
+      metaCountryDescription: "حوّل وحدات الأراضي المحلية حسب الولاية/المنطقة في {country}.",
+      metaRegionTitle: "محول وحدات الأراضي في {region} — بيغا وكاثا والمزيد",
+      metaRegionDescription: "حوّل وحدات الأراضي المحلية في {region}، {country}.",
     },
     calculator: {
       bmi: {
@@ -701,6 +766,19 @@ export const dictionary = {
       asOf: "Tasas al {date}",
       disclaimer: "Los tipos de cambio se actualizan periódicamente, no en tiempo real — confirma siempre la tasa actual antes de una transacción financiera.",
     },
+    land: {
+      pageTitle: "Calculadora de Tierras",
+      pageSubtitle: "Las unidades locales de tierra como bigha, katha, kanal y marla varían según la región — selecciona un país y un estado para obtener la conversión correcta.",
+      countryTitle: "Calculadora de Unidades de Tierra de {country}",
+      countryPageSubtitle: "Las definiciones de las unidades de tierra varían según la región en {country}. Selecciona un estado o región a continuación para obtener la conversión correcta.",
+      regionTitle: "Calculadora de Unidades de Tierra de {region}",
+      regionPageSubtitle: "Las definiciones de las unidades de tierra pueden variar según la región. Estos valores se aplican específicamente a {region}, {country}.",
+      sourcesHeading: "Fuentes",
+      noDataMessage: "Todavía no se han publicado conversiones verificadas de unidades de tierra locales para {region}. Unidades locales como bigha o katha solo se añaden cuando se puede citar una fuente, ya que el mismo nombre de unidad puede referirse a una superficie distinta en un estado vecino.",
+      metaCountryDescription: "Convierte unidades de tierra locales por estado/región en {country}.",
+      metaRegionTitle: "Conversor de Unidades de Tierra de {region} — Bigha, Katha y Más",
+      metaRegionDescription: "Convierte unidades de tierra locales en {region}, {country}.",
+    },
     calculator: {
       bmi: {
         height: "Altura",
@@ -819,6 +897,19 @@ export const dictionary = {
       sourceLabel: "Source du taux de change",
       asOf: "Taux au {date}",
       disclaimer: "Les taux de change sont mis à jour périodiquement, pas en temps réel — vérifiez toujours le taux actuel avant toute transaction financière.",
+    },
+    land: {
+      pageTitle: "Calculateur de Terrain",
+      pageSubtitle: "Les unités de terrain locales comme le bigha, le katha, le kanal et le marla varient selon la région — sélectionnez un pays et un état pour obtenir la conversion correcte.",
+      countryTitle: "Calculateur d'Unités de Terrain de {country}",
+      countryPageSubtitle: "Les définitions des unités de terrain varient selon la région en {country}. Sélectionnez un état ou une région ci-dessous pour obtenir la conversion correcte.",
+      regionTitle: "Calculateur d'Unités de Terrain de {region}",
+      regionPageSubtitle: "Les définitions des unités de terrain peuvent varier selon la région. Ces valeurs s'appliquent spécifiquement à {region}, {country}.",
+      sourcesHeading: "Sources",
+      noDataMessage: "Les conversions d'unités de terrain locales vérifiées pour {region} n'ont pas encore été publiées. Des unités locales comme le bigha ou le katha ne sont ajoutées qu'une fois qu'une source peut être citée, car le même nom d'unité peut désigner une superficie différente dans un état voisin.",
+      metaCountryDescription: "Convertissez les unités de terrain locales par état/région en {country}.",
+      metaRegionTitle: "Convertisseur d'Unités de Terrain de {region} — Bigha, Katha et Plus",
+      metaRegionDescription: "Convertissez les unités de terrain locales à {region}, {country}.",
     },
     calculator: {
       bmi: {

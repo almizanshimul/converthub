@@ -5,13 +5,18 @@ import { LandCalculatorWidget, type LandUnitOption } from "@/components/land/lan
 import { ShareButton } from "@/components/share/share-button";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { localize, translationInclude } from "@/lib/i18n/translate";
 import type { Locale } from "@/lib/i18n/config";
 
-async function getRegionLandData(countrySlug: string, regionSlug: string) {
-  const country = await prisma.country.findUnique({ where: { slug: countrySlug } });
+async function getRegionLandData(countrySlug: string, regionSlug: string, locale: Locale) {
+  const country = await prisma.country.findUnique({
+    where: { slug: countrySlug },
+    include: { translations: translationInclude(locale) },
+  });
   if (!country) return null;
   const region = await prisma.region.findUnique({
     where: { countryId_slug: { countryId: country.id, slug: regionSlug } },
+    include: { translations: translationInclude(locale) },
   });
   if (!region) return null;
 
@@ -42,14 +47,18 @@ async function getRegionLandData(countrySlug: string, regionSlug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ country: string; region: string }>;
+  params: Promise<{ locale: string; country: string; region: string }>;
 }): Promise<Metadata> {
-  const { country: countrySlug, region: regionSlug } = await params;
-  const data = await getRegionLandData(countrySlug, regionSlug);
+  const { locale: rawLocale, country: countrySlug, region: regionSlug } = await params;
+  const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
+  const data = await getRegionLandData(countrySlug, regionSlug, locale);
   if (!data) return {};
+  const countryName = localize(data.country, data.country.translations).name;
+  const regionName = localize(data.region, data.region.translations).name;
   return {
-    title: `${data.region.name} Land Unit Converter — Bigha, Katha & More`,
-    description: `Convert local land units in ${data.region.name}, ${data.country.name}.`,
+    title: dict.land.metaRegionTitle.replace("{region}", regionName),
+    description: dict.land.metaRegionDescription.replace("{region}", regionName).replace("{country}", countryName),
   };
 }
 
@@ -61,11 +70,14 @@ export default async function LandRegionPage({
   const { locale: rawLocale, country: countrySlug, region: regionSlug } = await params;
   const locale = rawLocale as Locale;
   const dict = getDictionary(locale);
-  const data = await getRegionLandData(countrySlug, regionSlug);
+  const data = await getRegionLandData(countrySlug, regionSlug, locale);
   if (!data) notFound();
 
   const { country, region, options, conversions } = data;
+  const countryT = localize(country, country.translations);
+  const regionT = localize(region, region.translations);
   const sourcedConversions = conversions.filter((c) => c.source || c.sourceUrl);
+  const regionTitle = dict.land.regionTitle.replace("{region}", regionT.name);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -73,25 +85,25 @@ export default async function LandRegionPage({
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.land, href: `/${locale}/land` },
-          { label: country.name, href: `/${locale}/land/${country.slug}` },
-          { label: region.name },
+          { label: countryT.name, href: `/${locale}/land/${country.slug}` },
+          { label: regionT.name },
         ]}
       />
       <div className="mt-4 flex items-start justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">{region.name} Land Unit Calculator</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{regionTitle}</h1>
         <ShareButton
-          title={`${region.name} Land Unit Calculator`}
+          title={regionTitle}
           url={`/${locale}/land/${country.slug}/${region.slug}`}
           text={
             sourcedConversions[0]
-              ? `1 ${sourcedConversions[0].fromUnit.name} = ${Number(sourcedConversions[0].factor).toLocaleString("en-US", { maximumFractionDigits: 4 })} ${sourcedConversions[0].toUnit.name} (${region.name}, ${country.name})`
-              : `${region.name}, ${country.name} — local land unit converter`
+              ? `1 ${sourcedConversions[0].fromUnit.name} = ${Number(sourcedConversions[0].factor).toLocaleString("en-US", { maximumFractionDigits: 4 })} ${sourcedConversions[0].toUnit.name} (${regionT.name}, ${countryT.name})`
+              : `${regionT.name}, ${countryT.name} — local land unit converter`
           }
           labels={dict.share}
         />
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        Land-unit definitions can vary by region. These values apply specifically to {region.name}, {country.name}.
+        {dict.land.regionPageSubtitle.replace("{region}", regionT.name).replace("{country}", countryT.name)}
       </p>
 
       <div className="mt-6">
@@ -99,16 +111,14 @@ export default async function LandRegionPage({
           <LandCalculatorWidget units={options} labels={dict.widget} />
         ) : (
           <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-            Verified local land-unit conversions for {region.name} have not been published yet. Local units such as Bigha or
-            Katha are only added once a source can be cited, since the same unit name can mean a different area in a
-            neighboring state.
+            {dict.land.noDataMessage.replace("{region}", regionT.name)}
           </p>
         )}
       </div>
 
       {sourcedConversions.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold">Sources</h2>
+          <h2 className="text-lg font-semibold">{dict.land.sourcesHeading}</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {sourcedConversions.map((c) => (
               <li key={c.id} className="text-muted-foreground">
