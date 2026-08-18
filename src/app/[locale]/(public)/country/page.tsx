@@ -42,7 +42,7 @@ export default async function CountryLandingPage({ params }: { params: Promise<{
             <Link key={country.id} href={`/${locale}/country/${country.slug}`}>
               <Card className="flex items-start gap-4 p-5 transition-colors hover:border-primary">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10">
-                  <img src={getFlagSrc(country.code)} alt={t.name} title={t.name} className="h-full w-full object-cover" />
+                  <img src={getFlagSrc(country.code)} alt={t.name} title={t.name} className="h-full w-full object-cover" loading="lazy"/>
                 </span>
                 <span>
                   <p className="font-medium">{t.name}</p>
