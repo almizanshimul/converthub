@@ -16,4 +16,11 @@ export const authConfig = {
     signIn: "/admin/login",
   },
   providers: [],
+  // Auth.js defaults trustHost to false in production unless it detects
+  // Vercel/Cloudflare Pages (it auto-trues on AUTH_URL/AUTH_TRUST_HOST/VERCEL/
+  // CF_PAGES env vars, or NODE_ENV !== "production" - see @auth/core's
+  // lib/utils/env.js). Self-hosted behind a reverse proxy (cPanel's Apache/
+  // Passenger) matches none of those, so every auth request - session, CSRF,
+  // login - fails with UntrustedHost until this is explicitly opted in.
+  trustHost: true,
 } satisfies NextAuthConfig;
