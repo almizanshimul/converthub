@@ -15,7 +15,7 @@ export async function CategorySidebar({ locale, activeCategorySlug }: { locale: 
 
   return (
     <aside className="w-full shrink-0 md:w-56">
-      <h2 className="mb-3 px-1 text-sm font-semibold text-muted-foreground">{dict.section.categories}</h2>
+      <p className="mb-3 px-1 text-sm font-semibold text-muted-foreground">{dict.section.categories}</p>
       <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-1">
         {categories.map((cat) => {
           const t = localize(cat, cat.translations);
