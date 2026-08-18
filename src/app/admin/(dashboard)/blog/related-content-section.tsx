@@ -16,8 +16,6 @@ async function resolveTitle(type: string, id: string): Promise<string | null> {
       return (await prisma.blogPost.findUnique({ where: { id } }))?.title ?? null;
     case "country":
       return (await prisma.country.findUnique({ where: { id } }))?.name ?? null;
-    case "region":
-      return (await prisma.region.findUnique({ where: { id } }))?.name ?? null;
     default:
       return null;
   }

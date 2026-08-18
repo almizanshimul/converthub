@@ -5,6 +5,7 @@ import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
+import { ensureFreshRates } from "@/lib/currency-rates";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { sortCurrencyOptions, convertCurrency, type CurrencyOption } from "@/lib/currency";
 import { localeAlternates } from "@/lib/seo/alternates";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return { title: dict.currency.pageTitle, description: dict.currency.pageSubtitle, alternates: localeAlternates(locale, "/currency") };
 }
 
-const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };
+const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD" };
 
 export default async function CurrencyPage({
   params,
@@ -31,6 +32,8 @@ export default async function CurrencyPage({
   const { from: fromParam, to: toParam } = await searchParams;
   const locale = rawLocale as Locale;
   const dict = getDictionary(locale);
+
+  await ensureFreshRates();
 
   const [usd, targets] = await Promise.all([
     prisma.currency.findUnique({ where: { code: "USD" } }),

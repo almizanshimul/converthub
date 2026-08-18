@@ -1,4 +1,4 @@
-import type { Locale } from "./config";
+import type { AllLocale } from "./config";
 
 /**
  * Unit names (meter, kilogram, square-foot...) have no DB translation table —
@@ -7,7 +7,7 @@ import type { Locale } from "./config";
  * getUnitName() falls back to the base (English) name when a code is
  * missing, so new units degrade gracefully instead of rendering blank.
  */
-export const unitNames: Partial<Record<Locale, Record<string, string>>> = {
+export const unitNames: Partial<Record<AllLocale, Record<string, string>>> = {
   bn: {
     // length
     meter: "মিটার",
@@ -603,6 +603,9 @@ export const unitNames: Partial<Record<Locale, Record<string, string>>> = {
   },
 };
 
-export function getUnitName(code: string, baseName: string, locale: Locale): string {
+// Accepts AllLocale (not just the currently-active Locale) so the bulk
+// translation script can still look up unit names for locales that aren't
+// live yet - this is a data lookup, not a routing concern.
+export function getUnitName(code: string, baseName: string, locale: AllLocale): string {
   return unitNames[locale]?.[code] ?? baseName;
 }

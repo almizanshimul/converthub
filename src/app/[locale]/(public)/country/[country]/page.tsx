@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import { breadcrumbSchema } from "@/lib/seo/schema";
 import { truncate } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
 
-const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };
+const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD" };
 
 async function getCountry(slug: string, locale: Locale) {
   return prisma.country.findUnique({
@@ -90,7 +89,6 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
           labels={dict.share}
         />
       </div>
-      {t.introContent && <p className="mt-2 text-muted-foreground">{t.introContent}</p>}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Card className="p-4">
@@ -128,17 +126,22 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
             {country.regions.map((region) => {
               const rt = localize(region, region.translations);
               return (
-                <Link key={region.id} href={`/${locale}/country/${country.slug}/${region.slug}`}>
-                  <Card className="p-4 transition-colors hover:border-primary">
-                    <p className="text-sm font-medium">{rt.name}</p>
-                    {region.capital && <p className="mt-1 text-xs text-muted-foreground">{region.capital}</p>}
-                  </Card>
-                </Link>
+                <Card key={region.id} className="p-4">
+                  <p className="text-sm font-medium">{rt.name}</p>
+                  {region.capital && <p className="mt-1 text-xs text-muted-foreground">{region.capital}</p>}
+                </Card>
               );
             })}
           </div>
         </section>
       )}
+
+      <section className="mt-10">
+           <h2 className="text-xl font-semibold">Country Information</h2>
+
+          {t.introContent && <p className="mt-2 text-muted-foreground">{t.introContent}</p>}
+      </section>
+     
 
       {country.sourceUrl && country.sourceDate && (
         <div className="mt-10 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">

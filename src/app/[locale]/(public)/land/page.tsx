@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { getRealLandRegionIds } from "@/lib/land";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -19,10 +20,17 @@ export default async function LandLandingPage({ params }: { params: Promise<{ lo
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = getDictionary(locale);
+  const realRegionIds = await getRealLandRegionIds();
+  const realCountryIds = [...new Set(realRegionIds.values())];
+  const realRegionCountByCountry = new Map<string, number>();
+  for (const countryId of realRegionIds.values()) {
+    realRegionCountByCountry.set(countryId, (realRegionCountByCountry.get(countryId) ?? 0) + 1);
+  }
+
   const countries = await prisma.country.findMany({
-    where: { status: "PUBLISHED", regions: { some: {} } },
+    where: { status: "PUBLISHED", id: { in: realCountryIds } },
     orderBy: { name: "asc" },
-    include: { translations: translationInclude(locale), _count: { select: { regions: true } } },
+    include: { translations: translationInclude(locale) },
   });
 
   return (
@@ -39,7 +47,7 @@ export default async function LandLandingPage({ params }: { params: Promise<{ lo
               <Card className="p-5 transition-colors hover:border-primary">
                 <p className="font-medium">{t.name}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {dict.country.regionsCount.replace("{count}", String(country._count.regions))}
+                  {dict.country.regionsCount.replace("{count}", String(realRegionCountByCountry.get(country.id) ?? 0))}
                 </p>
               </Card>
             </Link>

@@ -9,6 +9,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
 import { breadcrumbSchema } from "@/lib/seo/schema";
+import { computeLandOptions, getRealLandRegionIds } from "@/lib/land";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getCountry(slug: string, locale: Locale) {
@@ -22,7 +23,9 @@ async function getCountry(slug: string, locale: Locale) {
 }
 
 export async function generateStaticParams() {
-  const rows = await prisma.country.findMany({ where: { regions: { some: {} } }, select: { slug: true } });
+  const realRegionIds = await getRealLandRegionIds();
+  const realCountryIds = [...new Set(realRegionIds.values())];
+  const rows = await prisma.country.findMany({ where: { id: { in: realCountryIds } }, select: { slug: true } });
   return rows.map((c) => ({ country: c.slug }));
 }
 
@@ -52,6 +55,23 @@ export default async function LandCountryPage({ params }: { params: Promise<{ lo
   if (!country) notFound();
   const t = localize(country, country.translations);
 
+  // country.regions includes every region of this country, but not all of
+  // them clear the "real calculator" bar - filter to the ones that actually
+  // get a land/[country]/[region] page (see generateStaticParams above).
+  const regionsWithRealData = (
+    await Promise.all(
+      country.regions.map(async (region) => {
+        const { options } = await computeLandOptions(country.id, region.id);
+        return options.length >= 2 ? region : null;
+      }),
+    )
+  ).filter((r) => r !== null);
+
+  // dynamicParams defaults to true, so without this check a country outside
+  // generateStaticParams' real-data set would still render on demand instead
+  // of 404ing - exactly the thin/empty page this route was trimmed to avoid.
+  if (regionsWithRealData.length === 0) notFound();
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <JsonLd
@@ -73,7 +93,7 @@ export default async function LandCountryPage({ params }: { params: Promise<{ lo
       <p className="mt-2 max-w-2xl text-muted-foreground">{dict.land.countryPageSubtitle.replace("{country}", t.name)}</p>
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {country.regions.map((region) => {
+        {regionsWithRealData.map((region) => {
           const rt = localize(region, region.translations);
           return (
             <Link key={region.id} href={`/${locale}/land/${country.slug}/${region.slug}`}>

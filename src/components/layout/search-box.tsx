@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, X, ArrowRightLeft, LandPlot, Globe, MapPin, Calculator, Hash, Coins } from "lucide-react";
+import { Search, X, ArrowRightLeft, LandPlot, Globe, Calculator, Hash, Coins } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 
 interface SearchResult {
-  type: "converter" | "calculator" | "category" | "country" | "region" | "land-unit" | "currency";
+  type: "converter" | "calculator" | "category" | "country" | "land-unit" | "currency";
   label: string;
   sublabel?: string;
   href: string;
@@ -17,7 +17,6 @@ const typeIcon: Record<SearchResult["type"], typeof Search> = {
   calculator: Hash,
   category: Calculator,
   country: Globe,
-  region: MapPin,
   "land-unit": LandPlot,
   currency: Coins,
 };

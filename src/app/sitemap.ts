@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { locales, defaultLocale } from "@/lib/i18n/config";
+import { getRealLandRegionIds } from "@/lib/land";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -46,15 +47,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.calculator.findMany({ where: { status: "PUBLISHED", isIndexable: true }, select: { slug: true, updatedAt: true } }),
     prisma.country.findMany({
       where: { status: "PUBLISHED", isIndexable: true, regions: { some: {} } },
-      select: { slug: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
     prisma.region.findMany({
       where: { status: "PUBLISHED", isIndexable: true },
-      select: { slug: true, updatedAt: true, country: { select: { slug: true } }, _count: { select: { landConversions: true } } },
+      select: { id: true, slug: true, updatedAt: true, country: { select: { slug: true } } },
     }),
     prisma.blogPost.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
     prisma.blogCategory.findMany({ select: { slug: true } }),
   ]);
+
+  // Land calculators only exist for regions that clear the "real data" bar
+  // (see src/lib/land.ts) - land/[country] and land/[country]/[region] are
+  // only generated for those, so the sitemap must match or it'd list URLs
+  // that 404.
+  const realLandRegionIds = await getRealLandRegionIds();
+  const realLandCountryIds = new Set(realLandRegionIds.values());
 
   const entries: MetadataRoute.Sitemap = [];
 
@@ -73,14 +81,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   for (const c of countries) {
     entries.push(...localizedEntries(`/country/${c.slug}`, { lastModified: c.updatedAt, changeFrequency: "monthly", priority: 0.6 }));
-    entries.push(...localizedEntries(`/land/${c.slug}`, { lastModified: c.updatedAt, changeFrequency: "monthly", priority: 0.5 }));
+    // land/[country] only exists for countries with at least one region that
+    // clears the "real data" bar (see src/lib/land.ts) - everything else has
+    // no land/[country] page to link to.
+    if (realLandCountryIds.has(c.id)) {
+      entries.push(...localizedEntries(`/land/${c.slug}`, { lastModified: c.updatedAt, changeFrequency: "monthly", priority: 0.5 }));
+    }
   }
+  // country/[country]/[region] pages don't exist (removed - state data still
+  // shows on the country page, just without its own sub-page), so no entries
+  // for those. land/[country]/[region] only for regions with a real calculator.
   for (const r of regions) {
-    entries.push(...localizedEntries(`/country/${r.country.slug}/${r.slug}`, { lastModified: r.updatedAt, changeFrequency: "monthly", priority: 0.5 }));
-    // The land-specific region page is only worth indexing once it actually has
-    // sourced conversions — otherwise it's the same thin "not published yet"
-    // fallback for every region, which is exactly what noDataMessage exists for.
-    if (r._count.landConversions > 0) {
+    if (realLandRegionIds.has(r.id)) {
       entries.push(...localizedEntries(`/land/${r.country.slug}/${r.slug}`, { lastModified: r.updatedAt, changeFrequency: "monthly", priority: 0.5 }));
     }
   }

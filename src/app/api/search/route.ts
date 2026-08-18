@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   if (q.length < 2) return NextResponse.json({ results: [] });
 
-  const [converters, calculators, categories, countries, regions, landUnits, currencies] = await Promise.all([
+  const [converters, calculators, categories, countries, landUnits, currencies] = await Promise.all([
     prisma.converter.findMany({
       where: { status: "PUBLISHED", isIndexable: true, name: { contains: q } },
       include: { category: true, translations: translationInclude(locale) },
@@ -31,11 +31,6 @@ export async function GET(req: NextRequest) {
     prisma.country.findMany({
       where: { status: "PUBLISHED", name: { contains: q } },
       include: { translations: translationInclude(locale) },
-      take: 4,
-    }),
-    prisma.region.findMany({
-      where: { status: "PUBLISHED", name: { contains: q } },
-      include: { translations: translationInclude(locale), country: true },
       take: 4,
     }),
     prisma.landUnit.findMany({
@@ -65,10 +60,6 @@ export async function GET(req: NextRequest) {
     ...countries.map((c) => {
       const t = localize(c, c.translations);
       return { type: "country", label: t.name, sublabel: undefined, href: `/${locale}/country/${c.slug}` };
-    }),
-    ...regions.map((r) => {
-      const t = localize(r, r.translations);
-      return { type: "region", label: t.name, sublabel: r.country.name, href: `/${locale}/country/${r.country.slug}/${r.slug}` };
     }),
     ...landUnits.map((u) => ({
       type: "land-unit",

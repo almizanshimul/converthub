@@ -1,4 +1,4 @@
-import type { Locale } from "./config";
+import type { Locale, AllLocale } from "./config";
 
 export const dictionary = {
   en: {
@@ -1418,7 +1418,7 @@ export const dictionary = {
       nextPage: "Suivant",
     },
   },
-} satisfies Record<Locale, unknown>;
+} satisfies Record<AllLocale, unknown>;
 
 export function getDictionary(locale: Locale) {
   return dictionary[locale];

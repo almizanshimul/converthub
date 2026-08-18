@@ -55,18 +55,6 @@ const RESOLVERS: Record<string, Resolver> = {
     }
     return map;
   },
-  region: async (locale, ids) => {
-    const rows = await prisma.region.findMany({
-      where: { id: { in: ids }, status: "PUBLISHED" },
-      include: { country: true, translations: translationInclude(locale) },
-    });
-    const map = new Map<string, RelatedItem>();
-    for (const row of rows) {
-      const t = localize(row, row.translations);
-      map.set(row.id, { type: "region", title: t.name, url: `/${locale}/country/${row.country.slug}/${row.slug}` });
-    }
-    return map;
-  },
 };
 
 // Curated-only: returns [] when nobody has manually linked this source item yet
@@ -106,7 +94,7 @@ export async function getRelatedContent(locale: Locale, sourceType: string, sour
   return items;
 }
 
-export const RELATED_CONTENT_TYPES = ["converter", "calculator", "blog_post", "country", "region"] as const;
+export const RELATED_CONTENT_TYPES = ["converter", "calculator", "blog_post", "country"] as const;
 
 // Used by the admin picker: resolve a human-typed slug to the real DB id
 // so the RelatedContent row can store ids (the schema's contract) without

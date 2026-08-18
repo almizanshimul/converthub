@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
-import { LandCalculatorWidget, type LandUnitOption } from "@/components/land/land-calculator-widget";
+import { LandCalculatorWidget } from "@/components/land/land-calculator-widget";
 import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -10,6 +10,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
 import { breadcrumbSchema } from "@/lib/seo/schema";
+import { computeLandOptions, getRealLandRegionIds } from "@/lib/land";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getRegionLandData(countrySlug: string, regionSlug: string, locale: Locale) {
@@ -24,32 +25,17 @@ async function getRegionLandData(countrySlug: string, regionSlug: string, locale
   });
   if (!region) return null;
 
-  const units = await prisma.landUnit.findMany({
-    where: { countryId: country.id, OR: [{ regionId: region.id }, { regionId: null }] },
-  });
-  const unitIds = units.map((u) => u.id);
-
-  const conversions = await prisma.landConversion.findMany({
-    where: { status: "PUBLISHED", fromUnitId: { in: unitIds }, toUnitId: { in: unitIds } },
-    include: { fromUnit: true, toUnit: true },
-  });
-
-  const referenceUnit = units.find((u) => u.code === "square-feet");
-  const sqFtFactorByUnitId = new Map<string, number>();
-  if (referenceUnit) sqFtFactorByUnitId.set(referenceUnit.id, 1);
-  for (const c of conversions) {
-    if (c.toUnitId === referenceUnit?.id) sqFtFactorByUnitId.set(c.fromUnitId, Number(c.factor));
-  }
-
-  const options: LandUnitOption[] = units
-    .filter((u) => sqFtFactorByUnitId.has(u.id))
-    .map((u) => ({ id: u.id, name: u.name, sqFtFactor: sqFtFactorByUnitId.get(u.id)! }));
+  const { units, conversions, options } = await computeLandOptions(country.id, region.id);
 
   return { country, region, options, conversions, units };
 }
 
 export async function generateStaticParams() {
-  const regions = await prisma.region.findMany({ where: { status: "PUBLISHED" }, include: { country: true } });
+  const realRegionIds = await getRealLandRegionIds();
+  const regions = await prisma.region.findMany({
+    where: { id: { in: [...realRegionIds.keys()] } },
+    include: { country: true },
+  });
   return regions.map((r) => ({ country: r.country.slug, region: r.slug }));
 }
 
@@ -87,6 +73,10 @@ export default async function LandRegionPage({
   const dict = getDictionary(locale);
   const data = await getRegionLandData(countrySlug, regionSlug, locale);
   if (!data) notFound();
+  // dynamicParams defaults to true, so a thin region outside
+  // generateStaticParams' real-data set would otherwise still render the
+  // generic "no data yet" fallback on demand instead of 404ing.
+  if (data.options.length < 2) notFound();
 
   const { country, region, options, conversions } = data;
   const countryT = localize(country, country.translations);
