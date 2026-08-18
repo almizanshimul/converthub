@@ -5,11 +5,14 @@ import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
 import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getFlagSrc } from "@/lib/flags";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
+import { truncate } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
 
 const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };
@@ -36,12 +39,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, country: slug } = await params;
   const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
   const country = await getCountry(slug, locale);
   if (!country) return {};
   const t = localize(country, country.translations);
   return {
-    title: t.seoTitle ?? `${t.name} — Capital, Currency & Land Units`,
-    description: t.seoDescription ?? t.introContent?.slice(0, 155) ?? undefined,
+    title: t.seoTitle ?? dict.content.countryMetaTitle.replace("{name}", t.name),
+    description:
+      t.seoDescription ??
+      (t.introContent ? truncate(t.introContent, 155) : dict.content.countryMetaDescription.replace("{name}", t.name)),
     alternates: localeAlternates(locale, `/country/${slug}`),
   };
 }
@@ -57,7 +63,15 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbSchema([
+          { label: dict.home, href: `/${locale}` },
+          { label: dict.nav.countries, href: `/${locale}/country` },
+          { label: t.name },
+        ])}
+      />
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.countries, href: `/${locale}/country` },
@@ -66,7 +80,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
       />
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src={getFlagSrc(country.code)} alt="" className="h-9 w-12 rounded shadow-sm" />
+          <img src={getFlagSrc(country.code)} alt={t.name} title={t.name} className="h-9 w-12 rounded shadow-sm" />
           <h1 className="text-3xl font-bold tracking-tight">{t.name}</h1>
         </div>
         <ShareButton

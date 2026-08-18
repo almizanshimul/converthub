@@ -3,10 +3,12 @@ import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { CurrencyWidget } from "@/components/currency/currency-widget";
 import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { sortCurrencyOptions, convertCurrency, type CurrencyOption } from "@/lib/currency";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -61,7 +63,8 @@ export default async function CurrencyPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.currency.navLabel }]} />
+      <JsonLd data={breadcrumbSchema([{ label: dict.home, href: `/${locale}` }, { label: dict.currency.navLabel }])} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.currency.navLabel }]} />
       <div className="mt-4 flex items-start justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{dict.currency.pageTitle}</h1>
         {(() => {
@@ -113,7 +116,7 @@ export default async function CurrencyPage({
         </>
       ) : (
         <p className="mt-6 rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          No exchange rate data yet — run <code>npm run currency:fetch</code>.
+          {dict.content.currencyNoRatesYet}
         </p>
       )}
     </div>

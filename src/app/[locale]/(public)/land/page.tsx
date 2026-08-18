@@ -27,7 +27,7 @@ export default async function LandLandingPage({ params }: { params: Promise<{ lo
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.land }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.land }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.land.pageTitle}</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">{dict.land.pageSubtitle}</p>
 

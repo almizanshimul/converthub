@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
+import { SocialLinks } from "@/components/layout/social-links";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { truncate } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -12,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const dict = getDictionary(locale);
   return {
     title: dict.pages.contact.title,
-    description: dict.pages.contact.body.slice(0, 155),
+    description: truncate(dict.pages.contact.body, 155),
     alternates: localeAlternates(locale, "/contact"),
   };
 }
@@ -26,7 +28,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.footer.contact }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.footer.contact }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.pages.contact.title}</h1>
       <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">{dict.pages.contact.body}</p>
 
@@ -41,6 +43,11 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           </a>
         </span>
       </Card>
+
+      <h2 className="mt-10 text-xl font-semibold tracking-tight">{dict.pages.about.connectTitle}</h2>
+      <div className="mt-4">
+        <SocialLinks />
+      </div>
     </div>
   );
 }

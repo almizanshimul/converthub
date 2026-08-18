@@ -31,7 +31,7 @@ export default async function CalculatorLandingPage({ params }: { params: Promis
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.calculators }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.calculators }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.nav.calculators}</h1>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">

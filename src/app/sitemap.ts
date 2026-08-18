@@ -33,6 +33,7 @@ const STATIC_PATHS: { path: string; priority: number }[] = [
   { path: "/about", priority: 0.3 },
   { path: "/contact", priority: 0.3 },
   { path: "/privacy", priority: 0.2 },
+  { path: "/terms", priority: 0.2 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

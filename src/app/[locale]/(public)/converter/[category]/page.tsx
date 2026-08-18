@@ -6,11 +6,13 @@ import { CategorySidebar } from "@/components/layout/category-sidebar";
 import { Card } from "@/components/ui/card";
 import { ConverterWidget, type WidgetUnit } from "@/components/converter/converter-widget";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getUnitName } from "@/lib/i18n/units";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getCategory(slug: string, locale: Locale) {
@@ -40,11 +42,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, category: slug } = await params;
   const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
   const category = await getCategory(slug, locale);
   if (!category) return {};
   const t = localize(category, category.translations);
   return {
-    title: category.seoTitle ?? `${t.name} Converter`,
+    title: category.seoTitle ?? dict.content.converterCategoryTitle.replace("{name}", t.name),
     description: category.seoDescription ?? t.description ?? undefined,
     alternates: localeAlternates(locale, `/converter/${slug}`),
   };
@@ -70,7 +73,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbSchema([
+          { label: dict.home, href: `/${locale}` },
+          { label: dict.nav.converters, href: `/${locale}/converter` },
+          { label: t.name },
+        ])}
+      />
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.converters, href: `/${locale}/converter` },
@@ -82,7 +93,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
         <CategorySidebar locale={locale} activeCategorySlug={category.slug} />
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">{t.name} Converter</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{dict.content.converterCategoryTitle.replace("{name}", t.name)}</h1>
           <p className="mt-2 text-muted-foreground">{t.description}</p>
 
           {defaultFrom && defaultTo && (
@@ -121,7 +132,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ local
           )}
 
           <section className="mt-10">
-            <h2 className="text-xl font-semibold">All {t.name} Units</h2>
+            <h2 className="text-xl font-semibold">{dict.content.allUnitsHeading.replace("{name}", t.name)}</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {category.units.map((u) => (
                 <li key={u.id} className="rounded-full border border-border bg-card px-3 py-1 text-sm">

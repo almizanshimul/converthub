@@ -5,6 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Truncates at a word boundary with an ellipsis instead of a hard character
+// cut — a plain .slice(0, n) regularly chops mid-word, which is exactly what
+// was happening to every meta description built from DB content.
+export function truncate(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  const sliced = text.slice(0, maxLength);
+  const lastSpace = sliced.lastIndexOf(" ");
+  return `${lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced}…`;
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

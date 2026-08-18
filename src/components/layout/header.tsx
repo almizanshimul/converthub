@@ -15,15 +15,23 @@ interface SiteHeaderProps {
 }
 
 export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
-  const calculatorRows = await prisma.calculator.findMany({
-    where: { status: "PUBLISHED", isIndexable: true },
-    orderBy: { name: "asc" },
-    include: { translations: translationInclude(locale) },
-  });
-  const calculators = calculatorRows.map((row) => {
-    const t = localize(row, row.translations);
-    return { slug: row.slug, name: t.name, description: t.description, category: row.category };
-  });
+  // The header renders on every single page, so a DB hiccup here must not take
+  // the whole site down — degrade to a plain link (CalculatorMegaMenu already
+  // falls back to one when `calculators` is empty) instead of throwing.
+  let calculators: { slug: string; name: string; description: string | null; category: string }[] = [];
+  try {
+    const calculatorRows = await prisma.calculator.findMany({
+      where: { status: "PUBLISHED", isIndexable: true },
+      orderBy: { name: "asc" },
+      include: { translations: translationInclude(locale) },
+    });
+    calculators = calculatorRows.map((row) => {
+      const t = localize(row, row.translations);
+      return { slug: row.slug, name: t.name, description: t.description, category: row.category };
+    });
+  } catch (error) {
+    console.error("SiteHeader: failed to load calculators", error);
+  }
 
   const navItems = [
     { href: `/${locale}/converter`, label: dict.nav.converters },
@@ -31,7 +39,6 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
     { href: `/${locale}/land`, label: dict.nav.land },
     { href: `/${locale}/calculator`, label: dict.nav.calculators },
     { href: `/${locale}/country`, label: dict.nav.countries },
-    { href: `/${locale}/blog`, label: dict.blog.navLabel },
   ];
 
   return (
@@ -61,17 +68,19 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
           <Link href={`/${locale}/country`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
             {dict.nav.countries}
           </Link>
-          <Link href={`/${locale}/blog`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            {dict.blog.navLabel}
-          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-3 md:ml-0">
-          <SearchBox locale={locale} placeholder={dict.search.placeholder} noResultsLabel={dict.search.noResults} />
+          <SearchBox
+            locale={locale}
+            placeholder={dict.search.placeholder}
+            noResultsLabel={dict.search.noResults}
+            clearLabel={dict.a11y.clearSearch}
+          />
           <div className="hidden md:block">
             <LanguageSwitcher locale={locale} />
           </div>
-          <MobileMenu>
+          <MobileMenu toggleLabel={dict.a11y.toggleMenu}>
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} className="text-sm font-medium text-muted-foreground hover:text-foreground">
                 {item.label}

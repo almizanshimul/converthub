@@ -4,15 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getCategoryIcon } from "@/lib/icons";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { CookieSettingsButton } from "@/components/consent/cookie-settings-button";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function SiteFooter({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
-  const categories = await prisma.converterCategory.findMany({
-    orderBy: { order: "asc" },
-    take: 6,
-    include: { translations: translationInclude(locale) },
-  });
+  const categories = await getFooterCategories(locale);
 
   return (
     <footer className="border-t border-border bg-card">
@@ -74,11 +71,6 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
                 {dict.nav.countries}
               </Link>
             </li>
-            <li>
-              <Link href={`/${locale}/blog`} className="text-sm text-muted-foreground hover:text-foreground">
-                {dict.blog.navLabel}
-              </Link>
-            </li>
           </ul>
         </div>
 
@@ -99,6 +91,14 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
               <Link href={`/${locale}/privacy`} className="text-sm text-muted-foreground hover:text-foreground">
                 {dict.footer.privacy}
               </Link>
+            </li>
+            <li>
+              <Link href={`/${locale}/terms`} className="text-sm text-muted-foreground hover:text-foreground">
+                {dict.footer.terms}
+              </Link>
+            </li>
+            <li>
+              <CookieSettingsButton label={dict.consent.cookieSettings} />
             </li>
           </ul>
         </div>
@@ -126,4 +126,19 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
       </div>
     </footer>
   );
+}
+
+// Renders on every page — a DB hiccup here should drop the category list,
+// not take the whole site down with it.
+async function getFooterCategories(locale: Locale) {
+  try {
+    return await prisma.converterCategory.findMany({
+      orderBy: { order: "asc" },
+      take: 6,
+      include: { translations: translationInclude(locale) },
+    });
+  } catch (error) {
+    console.error("SiteFooter: failed to load categories", error);
+    return [];
+  }
 }

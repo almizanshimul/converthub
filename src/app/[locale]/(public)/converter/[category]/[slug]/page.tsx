@@ -176,11 +176,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, category, slug } = await params;
   const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
   const converter = await getConverter(category, slug, locale);
   if (!converter) return {};
   const t = localize(converter, converter.translations);
   return {
-    title: t.seoTitle ?? `${t.name} Converter`,
+    title: t.seoTitle ?? dict.content.converterCategoryTitle.replace("{name}", t.name),
     description: t.seoDescription ?? t.description ?? undefined,
     robots: converter.isIndexable ? undefined : { index: false, follow: true },
     alternates: localeAlternates(locale, `/converter/${category}/${slug}`),
@@ -265,6 +266,7 @@ export default async function ConverterPage({
       {faq.length > 0 && <JsonLd data={faqSchema(faq)} />}
 
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.converters, href: `/${locale}/converter` },

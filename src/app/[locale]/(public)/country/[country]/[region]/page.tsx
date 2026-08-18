@@ -4,10 +4,13 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
+import { truncate } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getRegion(countrySlug: string, regionSlug: string, locale: Locale) {
@@ -39,13 +42,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, country: countrySlug, region: regionSlug } = await params;
   const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
   const data = await getRegion(countrySlug, regionSlug, locale);
   if (!data) return {};
   const rt = localize(data.region, data.region.translations);
   const ct = localize(data.country, data.country.translations);
   return {
-    title: rt.seoTitle ?? `${rt.name}, ${ct.name} — Land Units & Info`,
-    description: rt.seoDescription ?? rt.introContent?.slice(0, 155) ?? undefined,
+    title: rt.seoTitle ?? dict.content.countryRegionMetaTitle.replace("{region}", rt.name).replace("{country}", ct.name),
+    description:
+      rt.seoDescription ??
+      (rt.introContent
+        ? truncate(rt.introContent, 155)
+        : dict.content.countryRegionMetaDescription.replace("{region}", rt.name).replace("{country}", ct.name)),
     alternates: localeAlternates(locale, `/country/${countrySlug}/${regionSlug}`),
   };
 }
@@ -67,7 +75,16 @@ export default async function RegionPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbSchema([
+          { label: dict.home, href: `/${locale}` },
+          { label: dict.nav.countries, href: `/${locale}/country` },
+          { label: country.name, href: `/${locale}/country/${data.country.slug}` },
+          { label: region.name },
+        ])}
+      />
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.countries, href: `/${locale}/country` },

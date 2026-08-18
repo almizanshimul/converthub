@@ -33,11 +33,9 @@ export default async function ConverterLandingPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.converters }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.converters }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.nav.converters}</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        Pick a category to convert between any pair of units, or jump straight to a popular conversion.
-      </p>
+      <p className="mt-2 max-w-2xl text-muted-foreground">{dict.content.converterLandingSubtitle}</p>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {categories.map((cat) => {
@@ -52,7 +50,9 @@ export default async function ConverterLandingPage({ params }: { params: Promise
                 <span className="min-w-0">
                   <p className="font-medium">{t.name}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.description}</p>
-                  <p className="mt-3 text-xs text-muted-foreground">{cat._count.converters} popular converters</p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {dict.content.popularConvertersCount.replace("{count}", String(cat._count.converters))}
+                  </p>
                 </span>
               </Card>
             </Link>

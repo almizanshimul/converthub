@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getCountry(slug: string, locale: Locale) {
@@ -52,7 +54,15 @@ export default async function LandCountryPage({ params }: { params: Promise<{ lo
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbSchema([
+          { label: dict.home, href: `/${locale}` },
+          { label: dict.nav.land, href: `/${locale}/land` },
+          { label: t.name },
+        ])}
+      />
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.land, href: `/${locale}/land` },

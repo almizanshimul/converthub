@@ -31,7 +31,7 @@ export default async function CountryLandingPage({ params }: { params: Promise<{
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.countries }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.nav.countries }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.nav.countries}</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">{dict.country.listingDescription}</p>
 
@@ -42,7 +42,7 @@ export default async function CountryLandingPage({ params }: { params: Promise<{
             <Link key={country.id} href={`/${locale}/country/${country.slug}`}>
               <Card className="flex items-start gap-4 p-5 transition-colors hover:border-primary">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10">
-                  <img src={getFlagSrc(country.code)} alt="" className="h-full w-full object-cover" />
+                  <img src={getFlagSrc(country.code)} alt={t.name} title={t.name} className="h-full w-full object-cover" />
                 </span>
                 <span>
                   <p className="font-medium">{t.name}</p>

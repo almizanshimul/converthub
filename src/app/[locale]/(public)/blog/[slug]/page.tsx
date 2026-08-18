@@ -96,6 +96,7 @@ export default async function BlogPostPage({
       />
 
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.blog.navLabel, href: `/${locale}/blog` },
@@ -121,7 +122,7 @@ export default async function BlogPostPage({
 
       {post.featuredImage && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.featuredImage} alt={t.title} className="mt-6 w-full rounded-lg border border-border object-cover" />
+        <img src={post.featuredImage} alt={t.title} title={t.title} className="mt-6 w-full rounded-lg border border-border object-cover" />
       )}
 
       <section className="mt-8">

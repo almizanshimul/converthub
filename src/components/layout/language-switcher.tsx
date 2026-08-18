@@ -47,7 +47,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
           open ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground"
         }`}
       >
-        <img src={getFlagSrc(localeMeta[locale].flagCountry)} alt="" className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover" />
+        <img
+          src={getFlagSrc(localeMeta[locale].flagCountry)}
+          alt={localeMeta[locale].nativeLabel}
+          title={localeMeta[locale].nativeLabel}
+          className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover"
+        />
         {localeMeta[locale].nativeLabel}
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -72,7 +77,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
               }`}
             >
               <span className="flex items-center gap-2">
-                <img src={getFlagSrc(localeMeta[l].flagCountry)} alt="" className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover" />
+                <img
+                  src={getFlagSrc(localeMeta[l].flagCountry)}
+                  alt={localeMeta[l].nativeLabel}
+                  title={localeMeta[l].nativeLabel}
+                  className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover"
+                />
                 {localeMeta[l].nativeLabel}
               </span>
               {l === locale && <Check className="h-3.5 w-3.5" />}

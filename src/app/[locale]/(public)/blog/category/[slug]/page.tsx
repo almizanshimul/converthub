@@ -52,6 +52,7 @@ export default async function BlogCategoryPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.blog.navLabel, href: `/${locale}/blog` },

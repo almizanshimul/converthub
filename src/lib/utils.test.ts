@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cn, slugify } from "./utils";
+import { cn, slugify, truncate } from "./utils";
 
 describe("slugify", () => {
   it("lowercases and hyphenates spaces", () => {
@@ -16,6 +16,20 @@ describe("slugify", () => {
 
   it("preserves non-Latin letters instead of stripping them", () => {
     expect(slugify("বাংলা পোস্ট")).toBe("বাংলা-পোস্ট");
+  });
+});
+
+describe("truncate", () => {
+  it("returns short text unchanged", () => {
+    expect(truncate("hello", 20)).toBe("hello");
+  });
+
+  it("cuts at the last word boundary instead of mid-word", () => {
+    expect(truncate("India has 28 states and many union territories", 20)).toBe("India has 28 states…");
+  });
+
+  it("falls back to a hard cut when there's no space to break on", () => {
+    expect(truncate("supercalifragilisticexpialidocious", 10)).toBe("supercalif…");
   });
 });
 

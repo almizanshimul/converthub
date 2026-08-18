@@ -12,7 +12,15 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = getDictionary(locale);
-  return { title: dict.blog.pageTitle, description: dict.blog.pageSubtitle, alternates: localeAlternates(locale, "/blog") };
+  // No posts yet (and unlinked from nav for now) — same "don't index an empty
+  // shell" rule already applied to thin land-region pages.
+  const postCount = await prisma.blogPost.count({ where: { status: "PUBLISHED" } });
+  return {
+    title: dict.blog.pageTitle,
+    description: dict.blog.pageSubtitle,
+    robots: postCount === 0 ? { index: false, follow: true } : undefined,
+    alternates: localeAlternates(locale, "/blog"),
+  };
 }
 
 export default async function BlogListingPage({
@@ -35,7 +43,7 @@ export default async function BlogListingPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.blog.navLabel }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.blog.navLabel }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.blog.pageTitle}</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">{dict.blog.pageSubtitle}</p>
 

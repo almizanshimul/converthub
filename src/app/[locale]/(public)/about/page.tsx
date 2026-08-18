@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { SocialLinks } from "@/components/layout/social-links";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { truncate } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -10,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const dict = getDictionary(locale);
   return {
     title: dict.pages.about.title,
-    description: dict.pages.about.body[0]?.slice(0, 155),
+    description: dict.pages.about.body[0] ? truncate(dict.pages.about.body[0], 155) : undefined,
     alternates: localeAlternates(locale, "/about"),
   };
 }
@@ -22,7 +24,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Breadcrumb items={[{ label: dict.home, href: `/${locale}` }, { label: dict.footer.about }]} />
+      <Breadcrumb locale={locale} items={[{ label: dict.home, href: `/${locale}` }, { label: dict.footer.about }]} />
       <h1 className="mt-4 text-3xl font-bold tracking-tight">{dict.pages.about.title}</h1>
       <div className="mt-6 space-y-4 text-muted-foreground">
         {dict.pages.about.body.map((para, i) => (
@@ -48,6 +50,11 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             ))}
           </p>
         ))}
+      </div>
+
+      <h2 className="mt-10 text-xl font-semibold tracking-tight">{dict.pages.about.connectTitle}</h2>
+      <div className="mt-4">
+        <SocialLinks />
       </div>
     </div>
   );

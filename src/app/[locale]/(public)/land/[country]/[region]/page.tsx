@@ -4,10 +4,12 @@ import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { LandCalculatorWidget, type LandUnitOption } from "@/components/land/land-calculator-widget";
 import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { localeAlternates } from "@/lib/seo/alternates";
+import { breadcrumbSchema } from "@/lib/seo/schema";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getRegionLandData(countrySlug: string, regionSlug: string, locale: Locale) {
@@ -94,7 +96,16 @@ export default async function LandRegionPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbSchema([
+          { label: dict.home, href: `/${locale}` },
+          { label: dict.nav.land, href: `/${locale}/land` },
+          { label: countryT.name, href: `/${locale}/land/${country.slug}` },
+          { label: regionT.name },
+        ])}
+      />
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.land, href: `/${locale}/land` },
@@ -145,7 +156,7 @@ export default async function LandRegionPage({
                 {" — "}
                 {c.sourceUrl ? (
                   <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">
-                    {c.source ?? "source"}
+                    {c.source ?? dict.content.landSourceFallback}
                   </a>
                 ) : (
                   c.source

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 
-export function MobileMenu({ children }: { children: ReactNode }) {
+export function MobileMenu({ children, toggleLabel }: { children: ReactNode; toggleLabel: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -11,7 +11,7 @@ export function MobileMenu({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Toggle menu"
+        aria-label={toggleLabel}
         aria-expanded={open}
         className="rounded-md p-2 text-foreground hover:bg-primary/10"
       >

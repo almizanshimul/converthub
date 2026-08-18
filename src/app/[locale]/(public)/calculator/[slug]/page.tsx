@@ -81,6 +81,7 @@ export default async function CalculatorPage({ params }: { params: Promise<{ loc
       {faq.length > 0 && <JsonLd data={faqSchema(faq)} />}
 
       <Breadcrumb
+        locale={locale}
         items={[
           { label: dict.home, href: `/${locale}` },
           { label: dict.nav.calculators, href: `/${locale}/calculator` },
@@ -102,7 +103,7 @@ export default async function CalculatorPage({ params }: { params: Promise<{ loc
           <BasicCalculatorWidget labels={dict.calculator.basic} />
         ) : (
           <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-            This calculator isn&apos;t available yet.
+            {dict.content.calculatorNotAvailable}
           </p>
         )}
       </div>

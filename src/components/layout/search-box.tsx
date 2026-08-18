@@ -22,7 +22,17 @@ const typeIcon: Record<SearchResult["type"], typeof Search> = {
   currency: Coins,
 };
 
-export function SearchBox({ locale, placeholder, noResultsLabel }: { locale: Locale; placeholder: string; noResultsLabel: string }) {
+export function SearchBox({
+  locale,
+  placeholder,
+  noResultsLabel,
+  clearLabel,
+}: {
+  locale: Locale;
+  placeholder: string;
+  noResultsLabel: string;
+  clearLabel: string;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -75,7 +85,7 @@ export function SearchBox({ locale, placeholder, noResultsLabel }: { locale: Loc
         {query && (
           <button
             type="button"
-            aria-label="Clear search"
+            aria-label={clearLabel}
             onClick={() => {
               setQuery("");
               setResults(null);
