@@ -25,10 +25,7 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
 import { getUnitName } from "../src/lib/i18n/units";
-
-const LIBRETRANSLATE_URL = process.env.LIBRETRANSLATE_URL ?? "http://localhost:5000";
-const TARGET_LANGUAGES = ["bn", "hi", "ur", "ar", "es", "fr"] as const;
-type TargetLanguage = (typeof TARGET_LANGUAGES)[number];
+import { LIBRETRANSLATE_URL, TARGET_LANGUAGES, translate, checkLibreTranslateHealth, type TargetLanguage } from "./lib/libretranslate";
 
 // Converter names read as "{from} {connector} {to}". For Bengali/Hindi/Urdu
 // that's their "from" postposition (idiomatic "X to Y" in those languages).
@@ -45,146 +42,6 @@ const CONNECTOR: Record<TargetLanguage, string> = { bn: "থেকে", hi: "स
 interface FaqItem {
   question: string;
   answer: string;
-}
-
-async function translateRaw(text: string, target: TargetLanguage): Promise<string> {
-  const res = await fetch(`${LIBRETRANSLATE_URL}/translate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: text, source: "en", target, format: "text" }),
-  });
-  if (!res.ok) {
-    throw new Error(
-      `LibreTranslate request failed (${res.status}). Is it running? See the setup comment at the top of this script.\n${await res.text()}`,
-    );
-  }
-  const data = (await res.json()) as { translatedText: string };
-  return data.translatedText;
-}
-
-// Splits on sentence-ending punctuation (. ! ? ; or :) followed by
-// whitespace + a capital letter — NOT on every period, so decimal points
-// ("0.3048 meter") and mid-sentence abbreviations don't get cut. ; and :
-// split unconditionally (no capital-letter check) since English commonly
-// continues in lowercase after a colon ("definition: it was...") and
-// neither has a decimal-point-style false-split risk to guard against.
-function splitOnPunctuation(text: string): string[] {
-  return text
-    .split(/(?:(?<=[.!?])\s+(?=[A-Z])|(?<=[;:])\s+)/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-// A comma-only sentence with no ; or : can ALSO come back completely
-// untranslated once it's long enough — confirmed directly: a 24-word,
-// 155-character sentence returned verbatim, while the identical text split
-// roughly in half at a comma translated correctly on both halves. Greedily
-// packs comma-separated clauses up to the length limit, keeping each comma
-// attached to the end of the chunk before it (so re-joining with " " later
-// reconstructs "clause, clause" correctly, the same way it already does
-// for ; and : from splitOnPunctuation above).
-const MAX_CHUNK_CHARS = 100;
-function splitLongSentence(sentence: string): string[] {
-  if (sentence.length <= MAX_CHUNK_CHARS) return [sentence];
-  const parts = sentence.split(/(?<=,)\s+/);
-  const chunks: string[] = [];
-  let buffer = "";
-  for (const part of parts) {
-    const candidate = buffer ? `${buffer} ${part}` : part;
-    if (candidate.length > MAX_CHUNK_CHARS && buffer) {
-      chunks.push(buffer);
-      buffer = part;
-    } else {
-      buffer = candidate;
-    }
-  }
-  if (buffer) chunks.push(buffer);
-  return chunks;
-}
-
-function splitSentences(text: string): string[] {
-  return splitOnPunctuation(text).flatMap(splitLongSentence);
-}
-
-// Splitting on punctuation/length (above) fixed the two specific triggers
-// found first — a trailing colon ("The foot took the opposite path:" comes
-// back as an English paraphrase, not Arabic) and long comma-only sentences
-// — but chasing individual trigger conditions kept surfacing new ones on
-// every re-run, on DIFFERENT sentences each time. That's a sign this isn't
-// a fixed, enumerable list of triggers; it's this specific local model
-// unpredictably failing on some inputs. So on top of the smart splitting
-// above (which still helps — most chunks translate fine on the first try),
-// every result gets checked for whether it actually looks translated, and
-// anything that doesn't gets bisected and retried rather than trusted.
-//
-// The non-Latin-letter-ratio check below only means something for targets
-// whose script differs from English's (bn/hi/ur/ar) — a real Bengali
-// translation is overwhelmingly Bengali-script letters, so a result that's
-// still mostly A-Za-z clearly wasn't translated. es/fr are ALSO Latin-script,
-// so a correct Spanish/French sentence scores the same as untranslated
-// English on this metric (both are ~100% A-Za-z) — applying it there was
-// confirmed to false-positive on already-correct translations, forcing
-// them through repeated bisection into fragment-sized pieces too small to
-// translate coherently, which is worse than not bisecting at all. For es/fr
-// the only reliable signal is an exact echo (checked above regardless of
-// target).
-const NON_LATIN_SCRIPT_TARGETS = new Set<TargetLanguage>(["bn", "hi", "ur", "ar"]);
-function looksUntranslated(original: string, result: string, target: TargetLanguage): boolean {
-  if (result.trim() === original.trim()) return true;
-  if (!NON_LATIN_SCRIPT_TARGETS.has(target)) return false;
-  const letters = result.replace(/[^\p{L}]/gu, "");
-  if (letters.length === 0) return false;
-  const nonLatinLetters = letters.replace(/[A-Za-z]/g, "");
-  return nonLatinLetters.length / letters.length < 0.3;
-}
-
-async function translateWithFallback(text: string, target: TargetLanguage, depth = 0): Promise<string> {
-  const result = await translateRaw(text, target);
-  if (!looksUntranslated(text, result, target)) return result;
-
-  // Short text (proper nouns especially — country/region names) can't be usefully
-  // bisected, but silently accepting a failed translation here was the actual bug:
-  // thousands of short place-name translations were left as plain English with no
-  // record of it anywhere, since this branch used to return `result` unconditionally
-  // without ever reaching the warning below. One plain retry costs little and
-  // occasionally succeeds; either way, a real failure now gets logged instead of
-  // disappearing silently.
-  if (text.length < 20) {
-    const retry = await translateRaw(text, target);
-    if (!looksUntranslated(text, retry, target)) return retry;
-    console.warn(`  [${target}] short text still untranslated after retry, keeping as-is: "${text}"`);
-    return retry;
-  }
-
-  if (depth >= 4) {
-    console.warn(`  [${target}] still untranslated after ${depth} splits, keeping as-is: "${text.slice(0, 80)}"`);
-    return result;
-  }
-  const midpoint = Math.floor(text.length / 2);
-  const spaceNearMid = text.indexOf(" ", midpoint);
-  const splitAt = spaceNearMid !== -1 ? spaceNearMid : midpoint;
-  const left = text.slice(0, splitAt).trim();
-  const right = text.slice(splitAt).trim();
-  if (!left || !right) return result;
-  const [leftResult, rightResult] = await Promise.all([
-    translateWithFallback(left, target, depth + 1),
-    translateWithFallback(right, target, depth + 1),
-  ]);
-  return `${leftResult} ${rightResult}`;
-}
-
-async function translate(text: string, target: TargetLanguage): Promise<string> {
-  if (!text.trim()) return text;
-  const sentences = splitSentences(text);
-  const translated = await Promise.all(
-    sentences.map(async (sentence) => {
-      const trailingPunctuation = sentence.match(/[;:]$/)?.[0];
-      const core = trailingPunctuation ? sentence.slice(0, -1).trim() : sentence;
-      const result = await translateWithFallback(core, target);
-      return trailingPunctuation ? `${result}${trailingPunctuation}` : result;
-    }),
-  );
-  return translated.join(" ");
 }
 
 async function translateFaq(faq: unknown, target: TargetLanguage): Promise<FaqItem[] | undefined> {
@@ -333,8 +190,8 @@ async function translateBlogPosts(target: TargetLanguage, languageId: string) {
 }
 
 async function main() {
-  const health = await fetch(`${LIBRETRANSLATE_URL}/languages`).catch(() => null);
-  if (!health?.ok) {
+  const healthy = await checkLibreTranslateHealth();
+  if (!healthy) {
     console.error(`Cannot reach LibreTranslate at ${LIBRETRANSLATE_URL}. Start it first:\n  libretranslate --load-only en,bn,hi --port 5000`);
     process.exit(1);
   }
