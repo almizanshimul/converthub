@@ -12,16 +12,36 @@ export const DEFAULT_CONSENT: ConsentState = { analytics: false, advertising: fa
 const STORAGE_KEY = "convert-hub-consent";
 const CONSENT_EVENT = "convert-hub-consent-change";
 
+// useSyncExternalStore requires getSnapshot to return the same reference
+// when nothing has changed - JSON.parse-ing on every call would build a new
+// object each time and send React into an infinite re-render loop ("The
+// result of getSnapshot should be cached", "Maximum update depth exceeded").
+// Caching against the raw string keeps the reference stable until the
+// underlying value actually changes.
+let cachedRaw: string | null = null;
+let cachedSnapshot: ConsentState | null = null;
+
 export function getStoredConsent(): ConsentState | null {
   if (typeof window === "undefined") return null;
+  let raw: string | null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return { analytics: Boolean(parsed.analytics), advertising: Boolean(parsed.advertising) };
+    raw = localStorage.getItem(STORAGE_KEY);
   } catch {
-    return null;
+    raw = null;
   }
+  if (raw === cachedRaw) return cachedSnapshot;
+  cachedRaw = raw;
+  if (!raw) {
+    cachedSnapshot = null;
+    return cachedSnapshot;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    cachedSnapshot = { analytics: Boolean(parsed.analytics), advertising: Boolean(parsed.advertising) };
+  } catch {
+    cachedSnapshot = null;
+  }
+  return cachedSnapshot;
 }
 
 export function setStoredConsent(state: ConsentState) {
