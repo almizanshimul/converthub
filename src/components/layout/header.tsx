@@ -4,7 +4,6 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { SearchBox } from "@/components/layout/search-box";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CalculatorMegaMenu } from "@/components/layout/calculator-mega-menu";
-import { LandMegaMenu } from "@/components/layout/land-mega-menu";
 import { prisma } from "@/lib/prisma";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import type { Locale } from "@/lib/i18n/config";
@@ -24,29 +23,6 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
   const calculators = calculatorRows.map((row) => {
     const t = localize(row, row.translations);
     return { slug: row.slug, name: t.name, description: t.description, category: row.category };
-  });
-
-  const landCountryRows = await prisma.country.findMany({
-    where: { status: "PUBLISHED", regions: { some: { status: "PUBLISHED", landConversions: { some: { status: "PUBLISHED" } } } } },
-    orderBy: { name: "asc" },
-    include: {
-      translations: translationInclude(locale),
-      regions: {
-        where: { status: "PUBLISHED", landConversions: { some: { status: "PUBLISHED" } } },
-        orderBy: { name: "asc" },
-        include: { translations: translationInclude(locale) },
-      },
-    },
-  });
-  const landGroups = landCountryRows.map((row) => {
-    const ct = localize(row, row.translations);
-    return {
-      country: { slug: row.slug, name: ct.name },
-      regions: row.regions.map((region) => {
-        const rt = localize(region, region.translations);
-        return { slug: region.slug, name: rt.name };
-      }),
-    };
   });
 
   const navItems = [
@@ -73,7 +49,9 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
           <Link href={`/${locale}/currency`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
             {dict.currency.navLabel}
           </Link>
-          <LandMegaMenu locale={locale} label={dict.nav.land} viewAllLabel={dict.nav.viewAllLand} groups={landGroups} />
+          <Link href={`/${locale}/land`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            {dict.nav.land}
+          </Link>
           <CalculatorMegaMenu
             locale={locale}
             label={dict.nav.calculators}

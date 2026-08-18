@@ -9,7 +9,6 @@ export const dictionary = {
       countries: "Countries",
       calculators: "Calculators",
       viewAllCalculators: "View all calculators",
-      viewAllLand: "View all land calculators",
       blog: "Blog",
     },
     widget: {
@@ -165,7 +164,6 @@ export const dictionary = {
       countries: "দেশসমূহ",
       calculators: "ক্যালকুলেটর",
       viewAllCalculators: "সব ক্যালকুলেটর দেখুন",
-      viewAllLand: "সব জমি ক্যালকুলেটর দেখুন",
       blog: "ব্লগ",
     },
     widget: {
@@ -320,7 +318,6 @@ export const dictionary = {
       countries: "देश",
       calculators: "कैलकुलेटर",
       viewAllCalculators: "सभी कैलकुलेटर देखें",
-      viewAllLand: "सभी भूमि कैलकुलेटर देखें",
       blog: "ब्लॉग",
     },
     widget: {
@@ -475,7 +472,6 @@ export const dictionary = {
       countries: "ممالک",
       calculators: "کیلکولیٹرز",
       viewAllCalculators: "تمام کیلکولیٹرز دیکھیں",
-      viewAllLand: "تمام زمین کیلکولیٹرز دیکھیں",
       blog: "بلاگ",
     },
     widget: {
@@ -630,7 +626,6 @@ export const dictionary = {
       countries: "الدول",
       calculators: "الحاسبات",
       viewAllCalculators: "عرض جميع الحاسبات",
-      viewAllLand: "عرض جميع حاسبات الأراضي",
       blog: "المدونة",
     },
     widget: {
@@ -785,7 +780,6 @@ export const dictionary = {
       countries: "Países",
       calculators: "Calculadoras",
       viewAllCalculators: "Ver todas las calculadoras",
-      viewAllLand: "Ver todas las calculadoras de tierras",
       blog: "Blog",
     },
     widget: {
@@ -941,7 +935,6 @@ export const dictionary = {
       countries: "Pays",
       calculators: "Calculatrices",
       viewAllCalculators: "Voir toutes les calculatrices",
-      viewAllLand: "Voir tous les calculateurs de terrain",
       blog: "Blog",
     },
     widget: {
