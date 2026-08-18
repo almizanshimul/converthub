@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getPublishedPosts } from "@/lib/blog";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateStaticParams() {
@@ -23,7 +24,10 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
   const category = await prisma.blogCategory.findUnique({ where: { slug } });
   if (!category) return {};
-  return { title: dict.blog.categoryPageTitle.replace("{category}", category.name) };
+  return {
+    title: dict.blog.categoryPageTitle.replace("{category}", category.name),
+    alternates: localeAlternates(locale, `/blog/category/${slug}`),
+  };
 }
 
 export default async function BlogCategoryPage({

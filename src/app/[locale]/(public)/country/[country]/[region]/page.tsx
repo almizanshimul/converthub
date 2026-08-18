@@ -7,6 +7,7 @@ import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getRegion(countrySlug: string, regionSlug: string, locale: Locale) {
@@ -45,6 +46,7 @@ export async function generateMetadata({
   return {
     title: rt.seoTitle ?? `${rt.name}, ${ct.name} — Land Units & Info`,
     description: rt.seoDescription ?? rt.introContent?.slice(0, 155) ?? undefined,
+    alternates: localeAlternates(locale, `/country/${countrySlug}/${regionSlug}`),
   };
 }
 

@@ -6,12 +6,18 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getCalculatorIcon } from "@/lib/icons";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
-export const metadata: Metadata = {
-  title: "Calculators",
-  description: "Number-to-words and other everyday calculators, including Bengali and Hindi number-to-words conversion.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
+  return {
+    title: dict.nav.calculators,
+    alternates: localeAlternates(locale, "/calculator"),
+  };
+}
 
 export default async function CalculatorLandingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;

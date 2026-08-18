@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getCountry(slug: string, locale: Locale) {
@@ -37,6 +38,7 @@ export async function generateMetadata({
   return {
     title: dict.land.countryTitle.replace("{country}", t.name),
     description: dict.land.metaCountryDescription.replace("{country}", t.name),
+    alternates: localeAlternates(locale, `/land/${slug}`),
   };
 }
 

@@ -5,12 +5,14 @@ import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
-  const dict = getDictionary(rawLocale as Locale);
-  return { title: dict.land.pageTitle, description: dict.land.pageSubtitle };
+  const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
+  return { title: dict.land.pageTitle, description: dict.land.pageSubtitle, alternates: localeAlternates(locale, "/land") };
 }
 
 export default async function LandLandingPage({ params }: { params: Promise<{ locale: string }> }) {

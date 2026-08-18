@@ -15,12 +15,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
     default: "ConvertHub — Unit Converters, Calculators & Land Info",
     template: "%s — ConvertHub",
   },
   description:
     "Free online unit converters, calculators, currency conversion, and region-specific land measurement tools.",
+  // The actual image comes from the opengraph-image.png / twitter-image.alt.txt
+  // file convention in src/app/[locale]/ (Next.js wires up og:image and
+  // twitter:image automatically from that file) — this just tells Twitter/X to
+  // render it as the large-image card instead of the small "summary" thumbnail.
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

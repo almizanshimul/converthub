@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getUnitName } from "@/lib/i18n/units";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 type ConverterPageUnit = {
@@ -182,6 +183,7 @@ export async function generateMetadata({
     title: t.seoTitle ?? `${t.name} Converter`,
     description: t.seoDescription ?? t.description ?? undefined,
     robots: converter.isIndexable ? undefined : { index: false, follow: true },
+    alternates: localeAlternates(locale, `/converter/${category}/${slug}`),
   };
 }
 

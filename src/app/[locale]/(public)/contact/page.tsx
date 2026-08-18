@@ -3,12 +3,19 @@ import { Mail } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Card } from "@/components/ui/card";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
-export const metadata: Metadata = {
-  title: "Contact Us",
-  description: "Report an incorrect conversion factor, a missing unit, or get in touch with the ConvertHub team.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
+  return {
+    title: dict.pages.contact.title,
+    description: dict.pages.contact.body.slice(0, 155),
+    alternates: localeAlternates(locale, "/contact"),
+  };
+}
 
 const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@convertHub.example";
 

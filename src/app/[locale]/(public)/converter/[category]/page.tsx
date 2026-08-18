@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getUnitName } from "@/lib/i18n/units";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getCategory(slug: string, locale: Locale) {
@@ -45,6 +46,7 @@ export async function generateMetadata({
   return {
     title: category.seoTitle ?? `${t.name} Converter`,
     description: category.seoDescription ?? t.description ?? undefined,
+    alternates: localeAlternates(locale, `/converter/${slug}`),
   };
 }
 

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getFlagSrc } from "@/lib/flags";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };
@@ -41,6 +42,7 @@ export async function generateMetadata({
   return {
     title: t.seoTitle ?? `${t.name} — Capital, Currency & Land Units`,
     description: t.seoDescription ?? t.introContent?.slice(0, 155) ?? undefined,
+    alternates: localeAlternates(locale, `/country/${slug}`),
   };
 }
 

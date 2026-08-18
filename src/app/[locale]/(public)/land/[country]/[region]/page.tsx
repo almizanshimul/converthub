@@ -7,6 +7,7 @@ import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getRegionLandData(countrySlug: string, regionSlug: string, locale: Locale) {
@@ -65,6 +66,12 @@ export async function generateMetadata({
   return {
     title: dict.land.metaRegionTitle.replace("{region}", regionName),
     description: dict.land.metaRegionDescription.replace("{region}", regionName).replace("{country}", countryName),
+    // Same "thin content" bar the sitemap already applies to this page (see
+    // src/app/sitemap.ts) — a region with fewer than 2 usable land-unit
+    // options renders the same generic "no data yet" fallback as every other
+    // un-sourced region, so it shouldn't compete for a search index slot.
+    robots: data.options.length < 2 ? { index: false, follow: true } : undefined,
+    alternates: localeAlternates(locale, `/land/${countrySlug}/${regionSlug}`),
   };
 }
 

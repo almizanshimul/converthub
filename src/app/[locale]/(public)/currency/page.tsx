@@ -6,12 +6,14 @@ import { AdSlot } from "@/components/ads/ad-slot";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { sortCurrencyOptions, convertCurrency, type CurrencyOption } from "@/lib/currency";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
-  const dict = getDictionary(rawLocale as Locale);
-  return { title: dict.currency.pageTitle, description: dict.currency.pageSubtitle };
+  const locale = rawLocale as Locale;
+  const dict = getDictionary(locale);
+  return { title: dict.currency.pageTitle, description: dict.currency.pageSubtitle, alternates: localeAlternates(locale, "/currency") };
 }
 
 const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD", hi: "hi-IN", ur: "ur-PK", ar: "ar-SA", es: "es-ES", fr: "fr-FR" };

@@ -11,6 +11,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
 import { getRelatedContent } from "@/lib/related-content";
 import { articleSchema, breadcrumbSchema } from "@/lib/seo/schema";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 
 async function getPost(slug: string, locale: Locale) {
@@ -46,7 +47,10 @@ export async function generateMetadata({
   return {
     title: post.seoTitle ?? t.title,
     description: post.seoDescription ?? t.excerpt ?? undefined,
-    alternates: post.canonicalUrl ? { canonical: post.canonicalUrl } : undefined,
+    // A custom canonicalUrl is an explicit admin override (this post is a
+    // duplicate/syndication of another URL) — respect it as-is rather than
+    // asserting hreflang alternates that would contradict it.
+    alternates: post.canonicalUrl ? { canonical: post.canonicalUrl } : localeAlternates(locale, `/blog/${slug}`),
     openGraph: {
       title: post.ogTitle ?? post.seoTitle ?? t.title,
       description: post.ogDescription ?? post.seoDescription ?? t.excerpt ?? undefined,

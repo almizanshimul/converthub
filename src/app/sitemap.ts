@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { locales } from "@/lib/i18n/config";
+import { locales, defaultLocale } from "@/lib/i18n/config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -10,9 +10,11 @@ type Entry = MetadataRoute.Sitemap[number];
 // carries the full set of locale variants in `alternates.languages` (including
 // itself) — this is the documented shape for a localized sitemap and is what
 // tells Google these are translations of the same page rather than duplicate
-// content across languages.
+// content across languages. x-default matches the per-page <link rel="alternate">
+// hreflang tags (src/lib/seo/alternates.ts) so both hreflang sources agree.
 function localizedEntries(path: string, opts?: Partial<Pick<Entry, "lastModified" | "changeFrequency" | "priority">>): Entry[] {
-  const languages = Object.fromEntries(locales.map((l) => [l, `${SITE_URL}/${l}${path}`]));
+  const languages: Record<string, string> = Object.fromEntries(locales.map((l) => [l, `${SITE_URL}/${l}${path}`]));
+  languages["x-default"] = `${SITE_URL}/${defaultLocale}${path}`;
   return locales.map((locale) => ({
     url: `${SITE_URL}/${locale}${path}`,
     alternates: { languages },

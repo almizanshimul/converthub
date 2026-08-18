@@ -79,8 +79,11 @@ Adding a new locale means: add it to `src/lib/i18n/config.ts`, hand-write its `d
 
 - `src/app/sitemap.ts` — generated at request time from the database (converters, calculators, countries, regions, blog posts, categories, tags), one entry per locale per page with `alternates.languages` pointing at every other locale's version of the same page.
 - `src/app/robots.ts` — allows everything except `/admin` and `/api/`, points crawlers at the sitemap.
+- `src/lib/seo/alternates.ts` — `localeAlternates(locale, path)`, used in every page's `generateMetadata`. Each locale self-canonicalizes to its own URL (not one shared canonical) and declares the full `hreflang` set, including `x-default`; this matches the sitemap's own `alternates.languages` so both hreflang sources agree. Pages with an explicit custom canonical (e.g. a syndicated blog post's `canonicalUrl`) respect that override instead.
+- `src/app/[locale]/opengraph-image.png` + `twitter-image.png` (with matching `.alt.txt` files) — the file-based Metadata API convention; Next.js generates the `og:image`/`twitter:image` tags automatically for every page under `[locale]`, no per-page wiring needed. `metadata.twitter.card = "summary_large_image"` in the root layout makes it render as the large-image card. Source image lives at `public/social preview image.png`.
 - `src/lib/seo/schema.ts` + `src/components/seo/json-ld.tsx` — JSON-LD helpers used across page types; `Organization`/`WebSite` are sitewide (root layout), the rest are per-page.
-- **`NEXT_PUBLIC_SITE_URL` must be set to the real production domain** — sitemap URLs, JSON-LD `url`/`@id` fields, and `robots.txt`'s sitemap reference all fall back to `http://localhost:3000` otherwise.
+- Thin/no-data pages (e.g. a land region with fewer than 2 usable unit conversions) are marked `robots: noindex` and excluded from the sitemap — the site would rather show one generic fallback in the index than thousands of near-duplicate "no data yet" pages.
+- **`NEXT_PUBLIC_SITE_URL` must be set to the real production domain** — sitemap URLs, canonical/hreflang URLs (via `metadataBase` in the root layout), JSON-LD `url`/`@id` fields, and `robots.txt`'s sitemap reference all fall back to `http://localhost:3000` otherwise.
 - Nearly every content page uses `generateStaticParams`, so the vast majority of the site (~49k pages across all locales) is static HTML at build time, not rendered per-request.
 
 ## Testing

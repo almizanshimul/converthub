@@ -13,6 +13,7 @@ import { logEvent } from "@/lib/analytics";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
+import { localeAlternates } from "@/lib/seo/alternates";
 import type { Locale } from "@/lib/i18n/config";
 import type { NumberWordsLocale } from "@/lib/numbers/number-to-words";
 
@@ -52,6 +53,7 @@ export async function generateMetadata({
     title: t.seoTitle ?? t.name,
     description: t.seoDescription ?? t.description ?? undefined,
     robots: calculator.isIndexable ? undefined : { index: false, follow: true },
+    alternates: localeAlternates(locale, `/calculator/${slug}`),
   };
 }
 
