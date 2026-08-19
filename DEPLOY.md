@@ -1,10 +1,13 @@
 # Deploying ConvertHub to cPanel — manual build & upload
 
-For when the cPanel server itself isn't strong enough to run `npm run build`
-(the site generates ~49,000 static pages — took 13–20 minutes on a real dev
-machine, and can be a lot worse on constrained shared-hosting CPU). Everything
-that's actually expensive happens on your own machine; the server only ever
-runs `node server.js` and the lightweight one-time database setup.
+For when the cPanel server itself isn't strong enough to run `npm run build`.
+Everything that's actually expensive happens on your own machine; the server
+only ever runs `node server.js` and the lightweight one-time database setup.
+
+(The site currently generates 600 static pages — a local build finishes in
+well under a minute. Still worth building locally rather than on shared
+hosting: a `next build` briefly needs more CPU/RAM than typical shared-hosting
+plans allot, regardless of page count.)
 
 Verified end-to-end this session: production build, `output: "standalone"`
 packaging, database connectivity through the Prisma MariaDB adapter, and the
@@ -23,8 +26,8 @@ this exact bundle.
 - **The build happens on your Windows machine**, then you transfer just the
   built output.
 
-> **Static pages bake in whatever's in the database at build time.** ~49,000
-> country/region/converter/land pages are pre-rendered from your database
+> **Static pages bake in whatever's in the database at build time.** Every
+> country/converter/land page is pre-rendered from your database
 > during `npm run build`. The blog listing and currency page are the
 > exception — those are server-rendered per request against the *live*
 > production database, not baked in. In practice: build against a database
@@ -77,6 +80,7 @@ nano .env
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | your real login — not the local dev placeholder |
 | `NEXT_PUBLIC_SITE_URL` | `https://convert-hub.xyz` |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | your real contact email |
+| `EXCHANGERATE_API_KEY` | your exchangerate-api.com key — without it the currency page falls back to a lower-guarantee free endpoint |
 | Ad/analytics IDs | leave blank until you have real accounts |
 
 **5. Apply migrations and seed reference data.**
@@ -192,9 +196,11 @@ and `AUTH_SECRET` is actually set in the server's `.env`.
 **Full (strict)**.
 
 **Currency page shows "rates not available yet."** Expected until
-`EXCHANGERATE_API_KEY` is set in the server's `.env` and
-`npm run currency:fetch` has run once (run it on the server, alongside the
-migrate/seed step — it's a normal npm script, not a build step).
+`EXCHANGERATE_API_KEY` is set in the server's `.env`. Rates refresh
+automatically — the first visit to the currency page each day fetches fresh
+rates and every visit after that reuses them, no scheduled task needed. To
+have real rates ready before your first visitor, run `npm run currency:fetch`
+once on the server (alongside the migrate/seed step).
 
 **Pages show content that doesn't match production.** You rebuilt locally
 against a database that's diverged from what's live — see the callout above.
