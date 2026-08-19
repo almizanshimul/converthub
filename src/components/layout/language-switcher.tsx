@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { locales, localeMeta, type Locale } from "@/lib/i18n/config";
 import { getFlagSrc } from "@/lib/flags";
-import { logEvent } from "@/lib/analytics";
 
 export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const pathname = usePathname();
@@ -68,10 +67,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
               href={`/${l}/${rest}`}
               role="option"
               aria-selected={l === locale}
-              onClick={() => {
-                setOpen(false);
-                if (l !== locale) logEvent("language_select", { metadata: { from: locale, to: l } });
-              }}
+              onClick={() => setOpen(false)}
               className={`flex items-center justify-between gap-3 px-3 py-2 transition-colors ${
                 l === locale ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
               }`}

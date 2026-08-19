@@ -13,7 +13,6 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { getFormulaDisplay } from "@/lib/converters/formula-display";
 import { convert, formatResult } from "@/lib/converters/engine";
 import { generateConverterContent } from "@/lib/converters/generated-content";
-import { logEvent, incrementConverterView } from "@/lib/analytics";
 import { breadcrumbSchema, converterWebApplicationSchema, faqSchema } from "@/lib/seo/schema";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -161,12 +160,23 @@ async function getConverter(categorySlug: string, slug: string, locale: Locale):
   };
 }
 
+// Static export has no server to fall back to for a pair that isn't
+// pre-built (see getConverter's synthetic-page branch above, which used to
+// rely on on-demand SSR for every non-curated pair) — so every unit pair in
+// every category has to be a real static file, not just the curated/
+// isIndexable ones.
 export async function generateStaticParams() {
-  const converters = await prisma.converter.findMany({
-    where: { status: "PUBLISHED", isIndexable: true },
-    include: { category: true },
-  });
-  return converters.map((c) => ({ category: c.category.slug, slug: c.slug }));
+  const categories = await prisma.converterCategory.findMany({ include: { units: true } });
+  const params: { category: string; slug: string }[] = [];
+  for (const category of categories) {
+    for (const from of category.units) {
+      for (const to of category.units) {
+        if (from.id === to.id) continue;
+        params.push({ category: category.slug, slug: `${from.code}-to-${to.code}` });
+      }
+    }
+  }
+  return params;
 }
 
 export async function generateMetadata({
@@ -198,10 +208,6 @@ export default async function ConverterPage({
   const dict = getDictionary(locale);
   const converter = await getConverter(categorySlug, slug, locale);
   if (!converter) notFound();
-  if (converter.isIndexable) {
-    await incrementConverterView(converter.id);
-    await logEvent("converter_use", { entityType: "converter", entityId: converter.id, metadata: { slug: converter.slug, locale } });
-  }
 
   const t = localize(converter, converter.translations);
   const category = localize(converter.category, converter.category.translations);

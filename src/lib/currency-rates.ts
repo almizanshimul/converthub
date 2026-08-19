@@ -1,13 +1,8 @@
 /**
- * Keeps ExchangeRate rows fresh without a separate scheduled task: the
- * currency page calls ensureFreshRates() on every request, and whichever
- * request is first to see stale data (>24h since the last fetch) pays the
- * cost of calling the external API and upserting; every other request that
- * day reads the cached DB rows straight away. The in-memory lock collapses
- * concurrent "first" requests into a single API call instead of a stampede.
- *
- * Also used directly by scripts/fetch-currency-rates.ts for a manual/CLI
- * refresh (e.g. right after deploying, or to force an update mid-day).
+ * Fetches live rates and upserts Currency + ExchangeRate rows. Used by
+ * scripts/fetch-currency-rates.ts — with the site statically exported, this
+ * is the only way rates get updated: run it locally, then rebuild and
+ * upload, same as any other content change.
  */
 import currencyCodes from "currency-codes";
 import symbolMap from "currency-symbol-map";
@@ -17,7 +12,6 @@ const API_KEY = process.env.EXCHANGERATE_API_KEY;
 const RATES_URL = API_KEY ? `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD` : "https://open.er-api.com/v6/latest/USD";
 const SOURCE_NAME = API_KEY ? "exchangerate-api.com" : "exchangerate-api.com (open access)";
 const SOURCE_URL = "https://www.exchangerate-api.com";
-const REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 // The keyed v6 endpoint calls the rates object "conversion_rates"; the free
 // keyless endpoint calls the same shape "rates". Normalized below.
@@ -106,24 +100,3 @@ export async function fetchAndStoreRates(): Promise<FetchRatesStats> {
   };
 }
 
-let refreshInFlight: Promise<void> | null = null;
-
-export async function ensureFreshRates(): Promise<void> {
-  const mostRecent = await prisma.exchangeRate.findFirst({ orderBy: { fetchedAt: "desc" }, select: { fetchedAt: true } });
-  const isStale = !mostRecent || Date.now() - mostRecent.fetchedAt.getTime() >= REFRESH_INTERVAL_MS;
-  if (!isStale) return;
-
-  if (!refreshInFlight) {
-    refreshInFlight = fetchAndStoreRates()
-      .then(() => undefined)
-      .catch((err) => {
-        // A failed refresh must not break the currency page — fall back to
-        // whatever's already in the DB (even if stale) instead of throwing.
-        console.error("[currency-rates] refresh failed, serving cached rates:", err);
-      })
-      .finally(() => {
-        refreshInFlight = null;
-      });
-  }
-  await refreshInFlight;
-}

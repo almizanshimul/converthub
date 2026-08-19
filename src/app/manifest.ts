@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
 
+// Required for output: "export" — this file has no dynamic input, so it's
+// always static anyway, but Next needs it declared explicitly.
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "ConvertHub — Unit Converters, Calculators & Land Info",

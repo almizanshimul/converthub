@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRightLeft } from "lucide-react";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { SearchBox } from "@/components/layout/search-box";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { CalculatorMegaMenu } from "@/components/layout/calculator-mega-menu";
 import { prisma } from "@/lib/prisma";
@@ -71,12 +70,6 @@ export async function SiteHeader({ locale, dict }: SiteHeaderProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-3 md:ml-0">
-          <SearchBox
-            locale={locale}
-            placeholder={dict.search.placeholder}
-            noResultsLabel={dict.search.noResults}
-            clearLabel={dict.a11y.clearSearch}
-          />
           <div className="hidden md:block">
             <LanguageSwitcher locale={locale} />
           </div>

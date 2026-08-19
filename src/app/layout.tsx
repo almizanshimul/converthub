@@ -38,6 +38,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        {/* Noscript-only fallback for when JS is disabled — the script-tag
+            loader (gated on consent) lives in TrackingScripts. Google's own
+            install instructions call for both; this half can't be
+            consent-gated since there's no JS to read the consent state. */}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
         <JsonLd data={websiteSchema()} />
         <JsonLd data={organizationSchema()} />
         {children}

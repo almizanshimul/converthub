@@ -9,7 +9,6 @@ import { BasicCalculatorWidget } from "@/components/calculator/basic-calculator-
 import { AdSlot } from "@/components/ads/ad-slot";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbSchema, faqSchema } from "@/lib/seo/schema";
-import { logEvent } from "@/lib/analytics";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { localize, translationInclude } from "@/lib/i18n/translate";
@@ -63,9 +62,6 @@ export default async function CalculatorPage({ params }: { params: Promise<{ loc
   const dict = getDictionary(locale);
   const calculator = await getCalculator(slug, locale);
   if (!calculator || calculator.status !== "PUBLISHED") notFound();
-  if (calculator.isIndexable) {
-    await logEvent("calculator_use", { entityType: "calculator", entityId: calculator.id, metadata: { slug: calculator.slug, locale } });
-  }
 
   const t = localize(calculator, calculator.translations);
   const faq = Array.isArray(t.faq) ? (t.faq as { question: string; answer: string }[]) : [];

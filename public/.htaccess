@@ -1,0 +1,46 @@
+# Replaces src/proxy.ts's locale-redirect logic, which can't run in a static
+# export (no server). Copied into every build's output since Next.js copies
+# everything under public/ verbatim into out/.
+
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+RewriteEngine On
+RewriteBase /
+
+# Bare root -> default locale (was proxy.ts's no-locale-in-path branch)
+RewriteRule ^$ /en/ [R=302,L]
+
+# A path prefixed with a locale that has translation data but isn't one of
+# the two currently served (hi/ur/ar/es/fr - see allLocales vs locales in
+# src/lib/i18n/config.ts) -> strip it and serve the default locale, instead
+# of leaving a dead link (was proxy.ts's stripKnownInactiveLocale).
+RewriteRule ^(hi|ur|ar|es|fr)(/.*)?$ /en$2 [R=302,L]
+
+# Cache lifetimes. Everything under _next/static/ is content-hashed by Next
+# (a rebuild changes the filename, not the content of an existing one), so
+# it's safe to cache for a year as immutable. HTML/JSON/txt payloads can
+# change on the next deploy under the same URL, so those stay short.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2?|ttf|otf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(png|jpe?g|gif|svg|ico|webp|avif)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(html|txt|json|xml|webmanifest)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 month"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>

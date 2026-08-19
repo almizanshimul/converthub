@@ -5,6 +5,9 @@ import { getRealLandRegionIds } from "@/lib/land";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+// Required for output: "export".
+export const dynamic = "force-static";
+
 type Entry = MetadataRoute.Sitemap[number];
 
 // Every path gets one sitemap entry per locale, and every one of those entries
@@ -30,7 +33,6 @@ const STATIC_PATHS: { path: string; priority: number }[] = [
   { path: "/country", priority: 0.7 },
   { path: "/currency", priority: 0.7 },
   { path: "/land", priority: 0.7 },
-  { path: "/blog", priority: 0.6 },
   { path: "/about", priority: 0.3 },
   { path: "/contact", priority: 0.3 },
   { path: "/privacy", priority: 0.2 },
@@ -38,7 +40,7 @@ const STATIC_PATHS: { path: string; priority: number }[] = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [categories, converters, calculators, countries, regions, blogPosts, blogCategories] = await Promise.all([
+  const [categories, converters, calculators, countries, regions] = await Promise.all([
     prisma.converterCategory.findMany({ where: { isIndexable: true }, select: { slug: true } }),
     prisma.converter.findMany({
       where: { status: "PUBLISHED", isIndexable: true },
@@ -53,8 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       where: { status: "PUBLISHED", isIndexable: true },
       select: { id: true, slug: true, updatedAt: true, country: { select: { slug: true } } },
     }),
-    prisma.blogPost.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
-    prisma.blogCategory.findMany({ select: { slug: true } }),
   ]);
 
   // Land calculators only exist for regions that clear the "real data" bar
@@ -95,12 +95,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (realLandRegionIds.has(r.id)) {
       entries.push(...localizedEntries(`/land/${r.country.slug}/${r.slug}`, { lastModified: r.updatedAt, changeFrequency: "monthly", priority: 0.5 }));
     }
-  }
-  for (const b of blogPosts) {
-    entries.push(...localizedEntries(`/blog/${b.slug}`, { lastModified: b.updatedAt, changeFrequency: "monthly", priority: 0.6 }));
-  }
-  for (const bc of blogCategories) {
-    entries.push(...localizedEntries(`/blog/category/${bc.slug}`, { changeFrequency: "weekly", priority: 0.4 }));
   }
 
   return entries;

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { CurrencyWidget } from "@/components/currency/currency-widget";
 import { ShareButton } from "@/components/share/share-button";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { JsonLd } from "@/components/seo/json-ld";
 import { prisma } from "@/lib/prisma";
-import { ensureFreshRates } from "@/lib/currency-rates";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { sortCurrencyOptions, convertCurrency, type CurrencyOption } from "@/lib/currency";
 import { localeAlternates } from "@/lib/seo/alternates";
@@ -21,20 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 const DATE_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD" };
 
-export default async function CurrencyPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ from?: string; to?: string }>;
-}) {
+export default async function CurrencyPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;
-  const { from: fromParam, to: toParam } = await searchParams;
   const locale = rawLocale as Locale;
   const dict = getDictionary(locale);
 
-  await ensureFreshRates();
-
+  // Static export has no server to refresh rates on request — this page is a
+  // snapshot of whatever's in the database at build time. Run
+  // `npm run currency:fetch` before each build to keep it current.
   const [usd, targets] = await Promise.all([
     prisma.currency.findUnique({ where: { code: "USD" } }),
     prisma.currency.findMany({
@@ -56,13 +50,12 @@ export default async function CurrencyPage({
   const latestRate = targets.find((c) => c.ratesAsTarget[0])?.ratesAsTarget[0];
   const asOfDate = latestRate?.fetchedAt.toLocaleDateString(DATE_LOCALE[locale], { year: "numeric", month: "long", day: "numeric" });
 
-  const codes = new Set(sorted.map((c) => c.code));
-  const initialFromCode = fromParam && codes.has(fromParam.toUpperCase()) ? fromParam.toUpperCase() : "USD";
+  // No searchParams here — static export prerenders this page once, so a
+  // `?from=EUR&to=USD` deep link is read client-side instead (see
+  // CurrencyWidget's useSearchParams call) rather than server-side.
+  const initialFromCode = "USD";
   const fallbackTo = sorted.find((c) => c.code === "EUR") ?? sorted[1] ?? sorted[0];
-  const initialToCode =
-    toParam && codes.has(toParam.toUpperCase()) && toParam.toUpperCase() !== initialFromCode
-      ? toParam.toUpperCase()
-      : (fallbackTo?.code ?? initialFromCode);
+  const initialToCode = fallbackTo?.code ?? initialFromCode;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -82,13 +75,15 @@ export default async function CurrencyPage({
       {sorted.length >= 2 ? (
         <>
           <div className="mt-6">
-            <CurrencyWidget
-              currencies={sorted}
-              initialFromCode={initialFromCode}
-              initialToCode={initialToCode}
-              labels={{ from: dict.widget.from, to: dict.widget.to, swap: dict.widget.swap, amount: dict.currency.amount }}
-              tableTitle={dict.section.conversionTable}
-            />
+            <Suspense fallback={null}>
+              <CurrencyWidget
+                currencies={sorted}
+                initialFromCode={initialFromCode}
+                initialToCode={initialToCode}
+                labels={{ from: dict.widget.from, to: dict.widget.to, swap: dict.widget.swap, amount: dict.currency.amount }}
+                tableTitle={dict.section.conversionTable}
+              />
+            </Suspense>
           </div>
 
           <div className="mt-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +29,15 @@ export function CurrencyWidget({
   labels: CurrencyWidgetLabels;
   tableTitle: string;
 }) {
-  const [fromCode, setFromCode] = useState(initialFromCode);
-  const [toCode, setToCode] = useState(initialToCode);
+  // The page itself is prerendered once at build time (static export), so a
+  // `?from=EUR&to=USD` deep link has to be read here, client-side, instead
+  // of server-side via the page's searchParams.
+  const urlParams = useSearchParams();
+  const codes = useMemo(() => new Set(currencies.map((c) => c.code)), [currencies]);
+  const fromFromUrl = urlParams.get("from")?.toUpperCase();
+  const toFromUrl = urlParams.get("to")?.toUpperCase();
+  const [fromCode, setFromCode] = useState(fromFromUrl && codes.has(fromFromUrl) ? fromFromUrl : initialFromCode);
+  const [toCode, setToCode] = useState(toFromUrl && codes.has(toFromUrl) && toFromUrl !== fromFromUrl ? toFromUrl : initialToCode);
   const [amount, setAmount] = useState("1");
 
   const fromCurrency = currencies.find((c) => c.code === fromCode);
