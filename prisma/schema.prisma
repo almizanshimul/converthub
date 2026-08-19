@@ -232,7 +232,7 @@ model Unit {
   code         String // e.g. "meter", "foot"
   name         String
   symbol       String?
-  toBaseFactor Decimal? @db.Decimal(24, 12) // multiply-based factor to the category's base unit
+  toBaseFactor Decimal? @db.Decimal(36, 15) // multiply-based factor to the category's base unit
   isBaseUnit   Boolean  @default(false)
 
   category       ConverterCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
